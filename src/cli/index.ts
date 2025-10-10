@@ -98,7 +98,7 @@ program
     console.log("  - OPENAI_API_KEY:", process.env.OPENAI_API_KEY ? "set" : "not set");
 
     console.log("\n✨ Ready to use! Try:");
-    console.log("  imgflo generate --provider svg --params '{\"type\":\"gradient\"}' --out test.svg");
+    console.log("  imgflo generate --generator shapes --params '{\"type\":\"gradient\"}' --out test.svg");
   });
 
 program.parse();

@@ -19,7 +19,7 @@ export const configCommand = new Command("config")
 
           if (parts[0] === "s3") {
             if (!config.store) config.store = {};
-            if (!config.store.s3) config.store.s3 = { default: "s3" };
+            if (!config.store.s3) config.store.s3 = {};
 
             if (parts[1] === "bucket") {
               (config.store.s3 as any).bucket = value;
@@ -29,6 +29,7 @@ export const configCommand = new Command("config")
               (config.store.s3 as any)[parts[1]] = value;
             }
 
+            // Set default storage provider to s3
             if (!config.store.default) {
               config.store.default = "s3";
             }
