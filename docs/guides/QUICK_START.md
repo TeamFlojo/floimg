@@ -4,7 +4,7 @@
 
 This is the perfect tool when you need to generate images and get shareable URLs quickly.
 
-### The Problem This Solves
+### What imgflo Does
 
 When working with tools like Google Slides MCP or creating web content, you often need to:
 1. Generate an image
@@ -12,7 +12,7 @@ When working with tools like Google Slides MCP or creating web content, you ofte
 3. Upload it somewhere
 4. Get a URL back
 
-All of these steps usually require manual intervention. With imgflo, it's automated.
+imgflo provides a simple API for this complete workflow, wrapping Sharp, Resvg, AWS SDK, etc. into one convenient interface.
 
 ### Installation
 

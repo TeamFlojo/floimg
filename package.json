@@ -6,7 +6,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "imgflo": "./dist/cli/index.js"
+    "imgflo": "./dist/cli/index.js",
+    "imgflo-mcp": "./dist/mcp/server.js"
   },
   "exports": {
     ".": {
@@ -46,7 +47,9 @@
     "agent",
     "image-processing",
     "automation",
-    "cloud-storage"
+    "cloud-storage",
+    "mcp",
+    "model-context-protocol"
   ],
   "author": "Brett Cooke",
   "license": "MIT",
@@ -60,6 +63,7 @@
   "homepage": "https://github.com/bcooke/imgflo#readme",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.709.0",
+    "@modelcontextprotocol/sdk": "^1.20.0",
     "@resvg/resvg-js": "^2.6.2",
     "commander": "^12.1.0",
     "dotenv": "^16.4.7",

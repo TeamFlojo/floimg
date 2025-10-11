@@ -262,15 +262,13 @@ All dependencies are mature, well-maintained libraries.
 
 ## Why This Matters
 
-This solves a real problem for AI-assisted workflows. Before imgflo:
-- AI agents could generate code (like SVGs)
-- But couldn't complete the workflow (convert, upload, get URL)
-- Users had to manually intervene
+This provides a convenient abstraction for common image workflows:
+- **Less boilerplate**: Instead of wiring up Sharp + Resvg + AWS SDK every time, one simple API
+- **Good for automation**: Whether you're writing code or having an AI agent write it, the interface is simple
+- **Persistent config**: Set your S3 bucket once, not on every command
+- **Builds on great tools**: Sharp, Resvg, AWS SDK, etc. - imgflo just makes them easier to use together
 
-Now:
-- AI agents can complete the entire workflow
-- Users get shareable URLs immediately
-- Perfect for presentations, web development, content creation
+Perfect for presentations, web development, content creation - anywhere you need to generate and upload images programmatically.
 
 ## Your Feedback Needed
 

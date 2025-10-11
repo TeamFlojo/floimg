@@ -7,20 +7,25 @@
 
 ## What is imgflo?
 
-`imgflo` makes it easy for AI agents (like Claude Code) and developers to generate images, transform them, and upload them to the cloud — all through simple programmatic APIs or CLI commands.
+`imgflo` is a convenience library that wraps common image generation and manipulation workflows into a simple, unified API. It's useful for both developers and AI agents who need to generate images, convert formats, and upload to storage without writing the same boilerplate code every time.
 
-### The Problem
+### Why imgflo?
 
-AI agents like Claude Code can easily generate SVGs (because they're code), but the workflow breaks down when you need to:
-- Convert SVGs to raster formats (PNG, JPEG, WebP)
-- Upload images to S3 or other storage
-- Get back shareable URLs for use in presentations, websites, etc.
+Instead of juggling multiple libraries (Sharp, Resvg, AWS SDK, etc.) and writing the same conversion and upload logic repeatedly, you get:
+- **One simple API** for the complete workflow (generate → transform → upload)
+- **Sensible defaults** that work out of the box
+- **Persistent configuration** so you don't re-specify buckets/regions every time
+- **CLI and library** options for different use cases
 
-All of these steps typically require manual intervention.
+### Built on Great Tools
 
-### The Solution
+imgflo stands on the shoulders of:
+- [Sharp](https://sharp.pixelplumbing.com/) for fast image processing
+- [Resvg](https://github.com/RazrFalcon/resvg) for quality SVG rendering
+- [AWS SDK](https://aws.amazon.com/sdk-for-javascript/) for cloud uploads
+- And more
 
-`imgflo` provides a unified interface for the complete image workflow:
+It just makes them easier to use together.
 
 ```bash
 # Generate gradient → Convert to PNG → Upload to S3 → Get URL
@@ -140,6 +145,7 @@ console.log(`Saved to: ${result.url}`);
 - ✅ **Cloud Storage**: Upload to S3 with automatic URL generation
 - ✅ **Local Storage**: Save to filesystem
 - ✅ **CLI Tool**: Easy command-line interface
+- ✅ **MCP Server**: Direct integration with Claude Code and other AI assistants
 - ✅ **TypeScript**: Full type safety and IntelliSense
 - ✅ **Extensible**: Plugin architecture for custom providers
 
@@ -148,7 +154,6 @@ console.log(`Saved to: ${result.url}`);
 - 🔄 **AI Image Generation**: OpenAI DALL-E, Stable Diffusion
 - 🔄 **More SVG Providers**: Charts, diagrams, Trianglify, Satori
 - 🔄 **Image Optimization**: Compression and optimization
-- 🔄 **MCP Server**: Direct integration with Claude Code
 - 🔄 **Pipeline System**: Declarative YAML/JSON workflows
 
 ## Use Cases
@@ -326,10 +331,10 @@ OPENAI_API_KEY=sk-...
 
 ## Documentation
 
-- **[Quick Start Guide](./QUICK_START.md)** - Fast reference for common tasks
-- **[Getting Started](./GETTING_STARTED.md)** - Step-by-step tutorial
-- **[Project Status](./STATUS.md)** - Current status and roadmap
-- **[Full Specification](./imgflo-SPEC.md)** - Complete architecture details
+- **[Quick Start Guide](./docs/guides/QUICK_START.md)** - Fast reference for common tasks
+- **[MCP Server Guide](./docs/guides/MCP_SERVER.md)** - Use with Claude Code and AI assistants
+- **[Getting Started](./docs/guides/GETTING_STARTED.md)** - Step-by-step tutorial
+- **[Project Status](./docs/development/STATUS.md)** - Current status and roadmap
 - **[Examples](./examples/)** - Code examples and use cases
 
 ## Architecture
