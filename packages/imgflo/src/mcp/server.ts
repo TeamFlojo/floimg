@@ -7,17 +7,96 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
+import { readFile, mkdir } from "fs/promises";
+import { existsSync } from "fs";
+import { join } from "path";
 import createClient from "../index.js";
 import { loadConfig } from "../config/loader.js";
 import { ImgfloError } from "../core/errors.js";
-import type { MimeType } from "../core/types.js";
+import type { MimeType, ImageBlob } from "../core/types.js";
 
 /**
- * imgflo MCP Server - Smart Image Generation Router
+ * imgflo MCP Server v0.4.0 - Smart Image Generation & Workflow Orchestration
  *
- * Provides intelligent routing to appropriate image generators based on intent.
- * Auto-discovers and loads available plugins (quickchart, d3, mermaid, qr, screenshot).
+ * Key improvements:
+ * - Session workspace: Images stored with IDs, no byte passing between tools
+ * - File path references: Transform/save can reference any image by path or ID
+ * - Pipeline support: Multi-step workflows in a single call
+ * - Better intent routing: Recognizes AI image requests properly
  */
+
+// Session workspace for storing images between tool calls
+const SESSION_WORKSPACE = join(process.cwd(), ".imgflo", "mcp-session");
+const imageRegistry = new Map<string, { path: string; mime: MimeType; metadata: any }>();
+
+// Ensure workspace exists
+async function ensureWorkspace() {
+  if (!existsSync(SESSION_WORKSPACE)) {
+    await mkdir(SESSION_WORKSPACE, { recursive: true });
+  }
+}
+
+// Generate unique image ID
+function generateImageId(): string {
+  return `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// Load image from various sources
+async function loadImage(
+  imageId?: string,
+  imagePath?: string,
+  imageBytes?: string,
+  mime?: string
+): Promise<ImageBlob> {
+  // Priority 1: imageId (reference to session image)
+  if (imageId) {
+    const registered = imageRegistry.get(imageId);
+    if (!registered) {
+      throw new Error(`Image ID not found: ${imageId}. Use generate_image first to create an image.`);
+    }
+    const bytes = await readFile(registered.path);
+    return {
+      bytes,
+      mime: registered.mime,
+      ...registered.metadata,
+    };
+  }
+
+  // Priority 2: imagePath (reference to file on disk)
+  if (imagePath) {
+    const bytes = await readFile(imagePath);
+    // Detect MIME type from extension if not provided
+    const detectedMime = mime || detectMimeFromPath(imagePath);
+    return {
+      bytes,
+      mime: detectedMime as MimeType,
+    };
+  }
+
+  // Priority 3: imageBytes (base64 encoded, for external images)
+  if (imageBytes && mime) {
+    return {
+      bytes: Buffer.from(imageBytes, "base64"),
+      mime: mime as MimeType,
+    };
+  }
+
+  throw new Error("Must provide imageId, imagePath, or imageBytes+mime");
+}
+
+// Detect MIME type from file path
+function detectMimeFromPath(path: string): MimeType {
+  const ext = path.split('.').pop()?.toLowerCase();
+  const mimeMap: Record<string, MimeType> = {
+    'svg': 'image/svg+xml',
+    'png': 'image/png',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'webp': 'image/webp',
+    'avif': 'image/avif',
+  };
+  return mimeMap[ext || ''] || 'image/png';
+}
 
 // Plugin auto-discovery
 async function loadAvailablePlugins(client: any): Promise<string[]> {
@@ -25,7 +104,6 @@ async function loadAvailablePlugins(client: any): Promise<string[]> {
 
   console.error('[imgflo-mcp] Starting plugin discovery...');
 
-  // Try to load each plugin
   const potentialPlugins = [
     { name: 'quickchart', module: 'imgflo-quickchart' },
     { name: 'd3', module: 'imgflo-d3' },
@@ -68,7 +146,7 @@ async function loadAvailablePlugins(client: any): Promise<string[]> {
   return plugins;
 }
 
-// Smart generator selection based on intent
+// Smart generator selection based on intent - IMPROVED for v0.4.0
 function selectGenerator(intent: string, params: any): string {
   const intentLower = intent.toLowerCase();
 
@@ -92,7 +170,7 @@ function selectGenerator(intent: string, params: any): string {
     return 'mermaid';
   }
 
-  // Charts & Data Visualization
+  // Charts & Data Visualization (check BEFORE AI detection)
   if (intentLower.includes('chart') || intentLower.includes('graph') ||
       intentLower.includes('plot') || intentLower.includes('visualiz')) {
 
@@ -106,15 +184,32 @@ function selectGenerator(intent: string, params: any): string {
     return 'quickchart';
   }
 
-  // OpenAI for image generation
-  if (intentLower.includes('generate') || intentLower.includes('create') ||
-      intentLower.includes('dall-e') || intentLower.includes('ai image')) {
-    if (params.prompt) {
-      return 'openai';
-    }
+  // AI Image Generation - IMPROVED: Better keyword detection
+  // Check for scene descriptions, subjects, art styles, etc.
+  const aiKeywords = [
+    'photo', 'picture', 'illustration', 'painting', 'drawing',
+    'scene', 'image of', 'portrait', 'landscape', 'artwork',
+    'realistic', 'photorealistic', 'stylized', 'artistic',
+    'dall-e', 'ai image', 'ai generated', 'generate image',
+    'person', 'people', 'animal', 'building', 'nature',
+    'stadium', 'player', 'celebrating', 'sunset', 'dramatic'
+  ];
+
+  const hasAIKeyword = aiKeywords.some(keyword => intentLower.includes(keyword));
+  const hasPromptParam = params.prompt !== undefined;
+
+  // Route to OpenAI if:
+  // 1. Has AI-related keywords OR
+  // 2. Has prompt parameter OR
+  // 3. Intent describes a scene/subject (more than 5 words)
+  const wordCount = intent.trim().split(/\s+/).length;
+  const isDescriptiveIntent = wordCount > 5 && !intentLower.includes('gradient') && !intentLower.includes('shape');
+
+  if (hasAIKeyword || hasPromptParam || isDescriptiveIntent) {
+    return 'openai';
   }
 
-  // Default to shapes for simple SVG graphics
+  // Default to shapes for simple SVG graphics (gradients, basic shapes)
   return 'shapes';
 }
 
@@ -122,7 +217,7 @@ function selectGenerator(intent: string, params: any): string {
 const server = new Server(
   {
     name: "imgflo",
-    version: "0.3.0",
+    version: "0.4.0",
   },
   {
     capabilities: {
@@ -137,38 +232,41 @@ const TOOLS: Tool[] = [
     name: "generate_image",
     description:
       "Generate any type of image based on natural language intent. " +
-      "Supports: charts (bar, line, pie, scatter), diagrams (flowcharts, sequence, gantt), " +
-      "QR codes, screenshots, data visualizations (D3), AI images (DALL-E), and simple shapes/gradients. " +
+      "Supports: AI images (DALL-E), charts (bar, line, pie), diagrams (flowcharts, sequence), " +
+      "QR codes, screenshots, data visualizations (D3), and simple shapes/gradients. " +
       "The system automatically selects the best generator based on your intent. " +
-      "Images are automatically saved to avoid MCP size limits. Returns the saved image location.",
+      "Images are saved to session workspace and assigned an imageId for use in subsequent operations.",
     inputSchema: {
       type: "object",
       properties: {
         intent: {
           type: "string",
           description:
-            "What you want to create (e.g., 'bar chart showing quarterly revenue', " +
-            "'QR code for https://example.com', 'flowchart of authentication process', " +
-            "'screenshot of https://example.com')",
+            "Describe what you want to create in natural language. Examples: " +
+            "'Photo of a baseball stadium at sunset', " +
+            "'Bar chart showing Q1: 100, Q2: 150, Q3: 200', " +
+            "'Flowchart for user authentication', " +
+            "'QR code for https://example.com', " +
+            "'Screenshot of https://example.com'",
         },
         params: {
           type: "object",
           description:
-            "Parameters for the generator. Common params: width, height, data, colors. " +
-            "For charts: {type: 'bar'|'line'|'pie', data: {...}}. " +
+            "Optional parameters for fine control. " +
+            "For AI images: {prompt: 'detailed description', size: '1024x1024'}. " +
+            "For charts: {type: 'bar'|'line'|'pie', data: {labels: [...], datasets: [...]}}. " +
             "For QR: {text: 'content'}. " +
             "For diagrams: {code: 'mermaid syntax'}. " +
             "For screenshots: {url: 'https://...'}. " +
-            "For D3: {render: function, data: [...]}. " +
-            "For shapes: {type: 'gradient'|'circle'|'rectangle'}. " +
-            "For AI: {prompt: 'description'}",
+            "Usually not needed - intent is enough.",
           default: {},
         },
-        destination: {
+        saveTo: {
           type: "string",
           description:
-            "Where to save the image. Supports file paths (./output.png), S3 URIs (s3://bucket/key.png), " +
-            "or auto-generated path if not specified. Default: generated/timestamp-generator.ext",
+            "Optional: Also save to a destination (filesystem or cloud). " +
+            "Examples: './output.png', 's3://bucket/key.png', 'r2://bucket/key.png'. " +
+            "Image is always saved to session workspace regardless.",
         },
       },
       required: ["intent"],
@@ -177,28 +275,34 @@ const TOOLS: Tool[] = [
   {
     name: "transform_image",
     description:
-      "Transform an image with filters, effects, text, and more. " +
-      "Supports: format conversion, resize, filters (blur, sharpen, grayscale, etc.), " +
-      "effects (modulate, tint, negate), borders (extend, roundCorners), text (addText, addCaption), " +
-      "and preset filters (vintage, vibrant, blackAndWhite, dramatic, soft, cool, warm). " +
-      "Can optionally auto-save for large transformations by providing a destination.",
+      "Transform an image with filters, effects, text, resizing, and more. " +
+      "Reference images by: imageId (from generate_image), imagePath (any file), or imageBytes (base64). " +
+      "Supports: resize, convert, blur, sharpen, grayscale, modulate, tint, roundCorners, " +
+      "addText, addCaption, and preset filters (vintage, vibrant, dramatic, etc.). " +
+      "Transformed image is saved to session workspace with new imageId.",
     inputSchema: {
       type: "object",
       properties: {
+        imageId: {
+          type: "string",
+          description: "ID of image from previous generate_image or transform_image call",
+        },
+        imagePath: {
+          type: "string",
+          description: "Path to image file on disk (e.g., './my-image.png', 'generated/abc.png')",
+        },
         imageBytes: {
           type: "string",
-          description: "Base64-encoded image bytes",
+          description: "Base64-encoded image bytes (for external images not in session)",
         },
         mime: {
           type: "string",
-          description: "MIME type of input image (e.g., 'image/svg+xml')",
+          description: "MIME type (required only if using imageBytes, auto-detected for imagePath/imageId)",
         },
         operation: {
           type: "string",
           description:
-            "Transform operation: convert, resize, composite, optimizeSvg, " +
-            "blur, sharpen, grayscale, negate, normalize, threshold, modulate, tint, " +
-            "extend, extract, roundCorners, addText, addCaption, preset",
+            "Transform operation to apply",
           enum: [
             "convert",
             "resize",
@@ -224,64 +328,87 @@ const TOOLS: Tool[] = [
           type: "object",
           description:
             "Parameters for the operation. Examples: " +
+            "resize: {width: 800, height: 600}, " +
             "blur: {sigma: 5}, " +
             "modulate: {brightness: 1.2, saturation: 1.3}, " +
-            "tint: {r: 255, g: 240, b: 200}, " +
-            "extend: {top: 20, bottom: 20, left: 20, right: 20, background: '#fff'}, " +
             "roundCorners: {radius: 20}, " +
             "addText: {text: 'Hello', x: 100, y: 100, size: 48, color: '#fff', shadow: true}, " +
             "addCaption: {text: 'Caption', position: 'bottom'}, " +
-            "preset: {name: 'vintage' | 'vibrant' | 'blackAndWhite' | 'dramatic' | 'soft' | 'cool' | 'warm'}",
+            "preset: {name: 'vintage' | 'vibrant' | 'dramatic' | 'soft'}",
         },
         to: {
           type: "string",
-          description: "Target MIME type for convert operation (e.g., 'image/png', 'image/jpeg')",
+          description: "Target MIME type (for convert operation)",
         },
-        width: {
-          type: "number",
-          description: "Target width for resize operation",
-        },
-        height: {
-          type: "number",
-          description: "Target height for resize operation",
-        },
-        destination: {
+        saveTo: {
           type: "string",
           description:
-            "Optional: Where to save the transformed image. If provided, returns saved location instead of bytes. " +
-            "Useful for large transformations to avoid MCP size limits.",
+            "Optional: Also save to a destination (filesystem or cloud). " +
+            "Image is always saved to session workspace regardless.",
         },
       },
-      required: ["imageBytes", "mime", "operation"],
+      required: ["operation"],
     },
   },
   {
     name: "save_image",
     description:
-      "Save an image to filesystem or cloud storage. " +
-      "Supports smart destination routing: use file paths (./output.png), S3 URIs (s3://bucket/key), " +
-      "or specify provider explicitly. Filesystem is default for zero-config usage.",
+      "Save an image to filesystem or cloud storage (S3, Tigris, R2, etc.). " +
+      "Reference images by: imageId (from previous calls), imagePath (any file), or imageBytes (base64). " +
+      "Supports smart destination routing: './output.png' → filesystem, 's3://bucket/key' → S3. " +
+      "Returns public URL if saving to cloud storage.",
     inputSchema: {
       type: "object",
       properties: {
+        imageId: {
+          type: "string",
+          description: "ID of image from previous generate_image or transform_image call",
+        },
+        imagePath: {
+          type: "string",
+          description: "Path to image file on disk",
+        },
         imageBytes: {
           type: "string",
           description: "Base64-encoded image bytes",
         },
         mime: {
           type: "string",
-          description: "MIME type of the image (e.g., 'image/png')",
+          description: "MIME type (required only if using imageBytes)",
         },
         destination: {
           type: "string",
-          description: "Destination path or URI (e.g., './output.png', 's3://bucket/key.png', or just 'output.png')",
+          description: "Where to save: './output.png', 's3://bucket/key.png', 'r2://bucket/key.png'",
         },
         provider: {
           type: "string",
-          description: "Storage provider to use (e.g., 's3', 'fs'). Auto-detected from destination if not specified.",
+          description: "Storage provider: 's3' or 'fs' (auto-detected from destination if not specified)",
         },
       },
-      required: ["imageBytes", "mime", "destination"],
+      required: ["destination"],
+    },
+  },
+  {
+    name: "run_pipeline",
+    description:
+      "Execute a multi-step image workflow in a single call. " +
+      "Define a series of generate, transform, and save operations. " +
+      "Each step automatically receives the output from the previous step. " +
+      "Perfect for complex workflows like: generate → resize → add caption → upload to cloud.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        steps: {
+          type: "array",
+          description:
+            "Array of steps to execute in order. Each step is an object with one key: " +
+            "'generate', 'transform', or 'save'. The value is the parameters for that operation.",
+          items: {
+            type: "object",
+          },
+        },
+      },
+      required: ["steps"],
     },
   },
 ];
@@ -296,6 +423,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   try {
+    await ensureWorkspace();
+
     // Load configuration
     const config = await loadConfig();
     const client = createClient(config);
@@ -306,10 +435,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     switch (name) {
       case "generate_image": {
-        const { intent, params = {}, destination } = args as {
+        const { intent, params = {}, saveTo } = args as {
           intent: string;
           params?: Record<string, unknown>;
-          destination?: string;
+          saveTo?: string;
         };
 
         if (!intent) {
@@ -325,23 +454,31 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           params,
         });
 
-        // Auto-save to avoid MCP size limit
-        // Default destination: generated/timestamp-generator.ext
-        const getExtension = (mime: MimeType) => {
-          const map: Record<MimeType, string> = {
-            'image/svg+xml': 'svg',
-            'image/png': 'png',
-            'image/jpeg': 'jpg',
-            'image/webp': 'webp',
-            'image/avif': 'avif',
-          };
-          return map[mime] || 'png';
-        };
+        // Save to session workspace
+        const imageId = generateImageId();
+        const ext = getExtension(blob.mime);
+        const sessionPath = join(SESSION_WORKSPACE, `${imageId}.${ext}`);
+        await client.save(blob, sessionPath);
 
-        const defaultDestination = destination ||
-          `generated/${Date.now()}-${generator}.${getExtension(blob.mime)}`;
+        // Register in session
+        imageRegistry.set(imageId, {
+          path: sessionPath,
+          mime: blob.mime,
+          metadata: {
+            width: blob.width,
+            height: blob.height,
+            source: blob.source,
+          },
+        });
 
-        const result = await client.save(blob, defaultDestination);
+        console.error(`[imgflo-mcp] Saved to session: ${imageId} → ${sessionPath}`);
+
+        // Optionally save to additional destination
+        let cloudResult = null;
+        if (saveTo) {
+          cloudResult = await client.save(blob, saveTo);
+          console.error(`[imgflo-mcp] Also saved to: ${saveTo}`);
+        }
 
         return {
           content: [
@@ -349,124 +486,142 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               type: "text",
               text: JSON.stringify({
                 success: true,
-                generator, // Tell user which generator was used
-                image: {
-                  location: result.location,
-                  provider: result.provider,
-                  mime: result.mime,
+                imageId,
+                generator,
+                session: {
+                  path: sessionPath,
+                  mime: blob.mime,
                   width: blob.width,
                   height: blob.height,
-                  size: result.size,
                 },
-              }),
+                ...(cloudResult && {
+                  saved: {
+                    location: cloudResult.location,
+                    provider: cloudResult.provider,
+                    size: cloudResult.size,
+                  },
+                }),
+              }, null, 2),
             },
           ],
         };
       }
 
       case "transform_image": {
-        const { imageBytes, mime, operation, params = {}, to, width, height, destination } = args as {
-          imageBytes: string;
-          mime: string;
+        const { imageId, imagePath, imageBytes, mime, operation, params = {}, to, saveTo } = args as {
+          imageId?: string;
+          imagePath?: string;
+          imageBytes?: string;
+          mime?: string;
           operation: string;
           params?: Record<string, unknown>;
           to?: string;
-          width?: number;
-          height?: number;
-          destination?: string;
+          saveTo?: string;
         };
 
-        const inputBlob = {
-          bytes: Buffer.from(imageBytes, "base64"),
-          mime: mime as MimeType,
-        };
+        // Load input image
+        const inputBlob = await loadImage(imageId, imagePath, imageBytes, mime);
 
-        let blob;
+        let resultBlob: ImageBlob;
 
         // Handle special cases that need specific parameters
         if (operation === "convert") {
           if (!to) throw new Error("'to' parameter required for convert operation");
-          blob = await client.transform({
+          resultBlob = await client.transform({
             blob: inputBlob,
             op: "convert",
             to: to as MimeType,
             params,
           });
         } else if (operation === "resize") {
-          if (!width && !height) throw new Error("'width' or 'height' required for resize");
-          blob = await client.transform({
+          const { width, height } = params as any;
+          if (!width && !height) throw new Error("'width' or 'height' required in params for resize");
+          resultBlob = await client.transform({
             blob: inputBlob,
             op: "resize",
             params: { width, height, ...params },
           });
         } else {
           // All other operations use the generic params approach
-          blob = await client.transform({
+          resultBlob = await client.transform({
             blob: inputBlob,
             op: operation as any,
             params,
           });
         }
 
-        // If destination provided, auto-save (useful for large transformations)
-        if (destination) {
-          const result = await client.save(blob, destination);
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify({
-                  success: true,
-                  image: {
-                    location: result.location,
-                    provider: result.provider,
-                    mime: result.mime,
-                    width: blob.width,
-                    height: blob.height,
-                    size: result.size,
-                  },
-                }),
-              },
-            ],
-          };
+        // Save to session workspace
+        const newImageId = generateImageId();
+        const ext = getExtension(resultBlob.mime);
+        const sessionPath = join(SESSION_WORKSPACE, `${newImageId}.${ext}`);
+        await client.save(resultBlob, sessionPath);
+
+        // Register in session
+        imageRegistry.set(newImageId, {
+          path: sessionPath,
+          mime: resultBlob.mime,
+          metadata: {
+            width: resultBlob.width,
+            height: resultBlob.height,
+            source: resultBlob.source,
+          },
+        });
+
+        console.error(`[imgflo-mcp] Transformed and saved: ${newImageId} → ${sessionPath}`);
+
+        // Optionally save to additional destination
+        let cloudResult = null;
+        if (saveTo) {
+          cloudResult = await client.save(resultBlob, saveTo);
+          console.error(`[imgflo-mcp] Also saved to: ${saveTo}`);
         }
 
-        // Otherwise return bytes (for small transformations or when further processing needed)
         return {
           content: [
             {
               type: "text",
               text: JSON.stringify({
                 success: true,
-                blob: {
-                  bytes: blob.bytes.toString("base64"),
-                  mime: blob.mime,
-                  width: blob.width,
-                  height: blob.height,
+                imageId: newImageId,
+                operation,
+                session: {
+                  path: sessionPath,
+                  mime: resultBlob.mime,
+                  width: resultBlob.width,
+                  height: resultBlob.height,
                 },
-              }),
+                ...(cloudResult && {
+                  saved: {
+                    location: cloudResult.location,
+                    provider: cloudResult.provider,
+                    size: cloudResult.size,
+                  },
+                }),
+              }, null, 2),
             },
           ],
         };
       }
 
       case "save_image": {
-        const { imageBytes, mime, destination, provider } = args as {
-          imageBytes: string;
-          mime: string;
+        const { imageId, imagePath, imageBytes, mime, destination, provider } = args as {
+          imageId?: string;
+          imagePath?: string;
+          imageBytes?: string;
+          mime?: string;
           destination: string;
           provider?: string;
         };
 
-        const inputBlob = {
-          bytes: Buffer.from(imageBytes, "base64"),
-          mime: mime as MimeType,
-        };
+        // Load input image
+        const inputBlob = await loadImage(imageId, imagePath, imageBytes, mime);
 
         const result = await client.save(
           inputBlob,
           provider ? { path: destination, provider } : destination
         );
+
+        console.error(`[imgflo-mcp] Saved to: ${destination}`);
 
         return {
           content: [
@@ -474,11 +629,141 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               type: "text",
               text: JSON.stringify({
                 success: true,
-                provider: result.provider,
                 location: result.location,
+                provider: result.provider,
                 size: result.size,
                 mime: result.mime,
-              }),
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "run_pipeline": {
+        const { steps } = args as {
+          steps: Array<Record<string, any>>;
+        };
+
+        if (!Array.isArray(steps) || steps.length === 0) {
+          throw new Error("'steps' must be a non-empty array");
+        }
+
+        let currentImageId: string | undefined;
+        const results: any[] = [];
+
+        for (let i = 0; i < steps.length; i++) {
+          const step = steps[i];
+          const stepType = Object.keys(step)[0]; // 'generate', 'transform', or 'save'
+          const stepParams = step[stepType];
+
+          console.error(`[imgflo-mcp] Pipeline step ${i + 1}/${steps.length}: ${stepType}`);
+
+          if (stepType === 'generate') {
+            // Generate step
+            const { intent, params = {} } = stepParams;
+            const generator = selectGenerator(intent, params);
+            const blob = await client.generate({ generator, params });
+
+            // Save to session
+            const imageId = generateImageId();
+            const ext = getExtension(blob.mime);
+            const sessionPath = join(SESSION_WORKSPACE, `${imageId}.${ext}`);
+            await client.save(blob, sessionPath);
+
+            imageRegistry.set(imageId, {
+              path: sessionPath,
+              mime: blob.mime,
+              metadata: { width: blob.width, height: blob.height, source: blob.source },
+            });
+
+            currentImageId = imageId;
+            results.push({ step: i + 1, type: 'generate', imageId, generator });
+
+          } else if (stepType === 'transform') {
+            // Transform step - uses current image
+            if (!currentImageId) {
+              throw new Error(`Pipeline step ${i + 1}: transform requires a previous generate step`);
+            }
+
+            const { operation, params = {}, to } = stepParams;
+            const inputBlob = await loadImage(currentImageId);
+
+            let resultBlob: ImageBlob;
+            if (operation === "convert") {
+              resultBlob = await client.transform({
+                blob: inputBlob,
+                op: "convert",
+                to: to as MimeType,
+                params,
+              });
+            } else if (operation === "resize") {
+              resultBlob = await client.transform({
+                blob: inputBlob,
+                op: "resize",
+                params,
+              });
+            } else {
+              resultBlob = await client.transform({
+                blob: inputBlob,
+                op: operation as any,
+                params,
+              });
+            }
+
+            // Save to session
+            const newImageId = generateImageId();
+            const ext = getExtension(resultBlob.mime);
+            const sessionPath = join(SESSION_WORKSPACE, `${newImageId}.${ext}`);
+            await client.save(resultBlob, sessionPath);
+
+            imageRegistry.set(newImageId, {
+              path: sessionPath,
+              mime: resultBlob.mime,
+              metadata: { width: resultBlob.width, height: resultBlob.height },
+            });
+
+            currentImageId = newImageId;
+            results.push({ step: i + 1, type: 'transform', operation, imageId: newImageId });
+
+          } else if (stepType === 'save') {
+            // Save step - saves current image
+            if (!currentImageId) {
+              throw new Error(`Pipeline step ${i + 1}: save requires a previous generate/transform step`);
+            }
+
+            const { destination, provider } = stepParams;
+            const inputBlob = await loadImage(currentImageId);
+
+            const result = await client.save(
+              inputBlob,
+              provider ? { path: destination, provider } : destination
+            );
+
+            results.push({
+              step: i + 1,
+              type: 'save',
+              location: result.location,
+              provider: result.provider,
+              size: result.size,
+            });
+
+          } else {
+            throw new Error(`Unknown pipeline step type: ${stepType}. Use 'generate', 'transform', or 'save'.`);
+          }
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                success: true,
+                pipeline: {
+                  totalSteps: steps.length,
+                  finalImageId: currentImageId,
+                  results,
+                },
+              }, null, 2),
             },
           ],
         };
@@ -499,7 +784,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             success: false,
             error: errorType,
             message,
-          }),
+          }, null, 2),
         },
       ],
       isError: true,
@@ -507,13 +792,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
+// Helper: Get file extension from MIME type
+function getExtension(mime: MimeType): string {
+  const map: Record<MimeType, string> = {
+    'image/svg+xml': 'svg',
+    'image/png': 'png',
+    'image/jpeg': 'jpg',
+    'image/webp': 'webp',
+    'image/avif': 'avif',
+  };
+  return map[mime] || 'png';
+}
+
 // Start server with stdio transport
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
   // Log to stderr (stdout is used for MCP communication)
-  console.error("imgflo MCP server running on stdio");
+  console.error("imgflo MCP server v0.4.0 running on stdio");
+  console.error("Session workspace:", SESSION_WORKSPACE);
   console.error("Smart routing enabled - will auto-select best generator based on intent");
 }
 

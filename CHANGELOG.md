@@ -5,7 +5,139 @@ All notable changes to imgflo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.0] - 2025-01-XX
+## [0.4.0] - 2025-01-12
+
+### BREAKING CHANGES - MCP Server Redesign
+
+The MCP server has been completely redesigned based on real-world usability feedback. This is a **breaking change** for MCP users, but makes imgflo actually practical for production use.
+
+### Added
+
+#### MCP Session Workspace
+- **Image ID tracking**: Images are stored in session workspace (`.imgflo/mcp-session/`) with unique IDs
+- **No byte passing**: Transform and save operations reference images by ID, not by re-uploading base64
+- **Efficient chaining**: Generate → transform → transform → save works without hitting MCP token limits
+- **File path support**: All MCP tools accept `imageId`, `imagePath`, or `imageBytes` for maximum flexibility
+
+#### run_pipeline Tool
+- **Multi-step workflows**: Execute generate → transform → save in a single MCP call
+- **Automatic chaining**: Each step receives output from previous step
+- **Perfect for complex workflows**: "Generate AI image, resize, add caption, upload to S3" in one call
+- **Returns all results**: Get finalImageId and location/URL from the pipeline execution
+
+#### Improved Intent Routing
+- **Better AI detection**: Recognizes "photo of", "illustration", "scene", "stadium", "sunset" as AI requests
+- **Descriptive intent detection**: Long descriptions (>5 words) auto-route to OpenAI instead of shapes
+- **Keyword matching**: Added 20+ AI-related keywords (photo, picture, painting, realistic, etc.)
+- **Fixed default behavior**: No longer defaults everything to shapes/gradients
+
+#### Enhanced MCP Tools
+
+**generate_image**:
+- Returns `imageId` for use in subsequent operations
+- Optional `saveTo` parameter for also saving to cloud/filesystem
+- Session path included in response
+
+**transform_image**:
+- Accepts `imageId` (from session), `imagePath` (any file), or `imageBytes` (base64)
+- Returns new `imageId` after transformation
+- Optional `saveTo` parameter
+- MIME type auto-detected for imagePath/imageId
+
+**save_image**:
+- Accepts `imageId`, `imagePath`, or `imageBytes`
+- Works with session images without re-uploading
+- Returns `location` (file path or cloud URL)
+
+### Changed
+
+- MCP server version updated to 0.4.0
+- MCP tools no longer pass large image bytes between calls
+- Session workspace created automatically on server start
+- Tool parameter `destination` renamed to `saveTo` for clarity in generate/transform
+
+### Fixed
+
+- **Critical**: Can now transform generated images without hitting MCP token limits
+- **Critical**: Can chain multiple operations (generate → transform → save)
+- **Critical**: Cloud upload works through MCP (via saveTo or save_image tool)
+- AI image intent routing now works correctly (was defaulting to shapes)
+- Transform operations no longer require re-uploading multi-megabyte base64 blobs
+
+### Real-World Use Case Enabled
+
+Before v0.4.0 (❌ Broken):
+```
+1. Generate AI image → get local file
+2. Want to resize? ❌ Can't reference file, must re-upload 2MB base64
+3. Want to add caption? ❌ Would hit MCP token limit
+4. Want cloud URL? ❌ Have to drop to TypeScript
+```
+
+After v0.4.0 (✅ Works):
+```javascript
+// Step 1: Generate
+const img = generate_image({ intent: "Baseball stadium at sunset" })
+// Returns: { imageId: "img_123...", session: { path: "..." } }
+
+// Step 2: Resize
+const resized = transform_image({
+  imageId: img.imageId,
+  operation: "resize",
+  params: { width: 800, height: 600 }
+})
+// Returns: { imageId: "img_456...", session: { path: "..." } }
+
+// Step 3: Add caption
+const captioned = transform_image({
+  imageId: resized.imageId,
+  operation: "addCaption",
+  params: { text: "Game Day", position: "bottom" }
+})
+
+// Step 4: Upload to cloud
+const final = save_image({
+  imageId: captioned.imageId,
+  destination: "s3://my-bucket/stadium.png"
+})
+// Returns: { location: "https://bucket.s3.amazonaws.com/stadium.png" }
+```
+
+Or use the pipeline API:
+```javascript
+run_pipeline({
+  steps: [
+    { generate: { intent: "Baseball stadium at sunset" } },
+    { transform: { operation: "resize", params: { width: 800, height: 600 } } },
+    { transform: { operation: "addCaption", params: { text: "Game Day" } } },
+    { save: { destination: "s3://my-bucket/stadium.png" } }
+  ]
+})
+```
+
+### Technical Details
+
+- Session workspace: `.imgflo/mcp-session/` in working directory
+- Image IDs: `img_{timestamp}_{random}` format
+- Registry stored in memory (per MCP server instance)
+- File references prioritized over byte passing
+- MIME type detection from file extensions
+- Backward compatible: imageBytes still supported for external images
+
+### Migration Guide for MCP Users
+
+**Breaking changes**:
+1. `destination` parameter renamed to `saveTo` in generate_image and transform_image
+2. Return values now include `imageId` and `session` object
+3. Must use `imageId` to reference previously generated/transformed images
+
+**Benefits**:
+- Multi-step workflows now actually work
+- No more MCP token limit issues
+- Can chain unlimited operations
+- Cloud upload integrated into workflow
+
+## [0.3.0] - 2025-01-11
 
 ### Added
 
