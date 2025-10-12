@@ -268,13 +268,17 @@ imgflo (core)
 
 ## Best Practices
 
-### 1. Keep Core Lean
+### 1. Core vs Plugins Architecture
 
-Only include generators with:
-- Zero dependencies (like `shapes`)
-- High utility + acceptable size (like `openai`)
+**📖 See [Core vs Plugins Guide](./docs/development/CORE_VS_PLUGINS.md) for detailed decision-making framework.**
 
-Everything else should be a plugin.
+Key principle:
+- **Core**: Fundamental image operations using dependencies we already need (< 5MB new deps)
+- **Plugins**: Specialized generation or heavy dependencies (> 5MB)
+
+Examples:
+- ✅ Core: Filters (Sharp-based), text rendering (@napi-rs/canvas, 2MB)
+- ✅ Plugin: Screenshots (Playwright, 200MB), QR codes (specialized library)
 
 ### 2. Follow Pass-Through Pattern
 
