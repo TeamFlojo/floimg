@@ -57,7 +57,7 @@ imgflo transform \
   --out gradient.png
 ```
 
-#### Example 2: Upload to S3
+#### Example 2: Save to S3
 
 First, set up your environment:
 
@@ -66,17 +66,17 @@ export AWS_REGION=us-east-1
 export S3_BUCKET=my-images
 ```
 
-Then upload:
+Then save:
 
 ```bash
-imgflo upload \
+imgflo save \
   --in gradient.png \
-  --key images/gradient.png
+  --out s3://my-images/images/gradient.png
 ```
 
 You'll get back a URL like: `https://my-images.s3.amazonaws.com/images/gradient.png`
 
-#### Example 3: Complete Workflow (Generate → Convert → Upload)
+#### Example 3: Complete Workflow (Generate → Convert → Save)
 
 ```bash
 # 1. Generate
@@ -85,8 +85,41 @@ imgflo generate --generator shapes --params '{"type":"gradient","width":1200,"he
 # 2. Convert
 imgflo transform --in temp.svg --op convert --to image/png --out temp.png
 
-# 3. Upload
-imgflo upload --in temp.png --key slides/background.png
+# 3. Save
+imgflo save --in temp.png --out slides/background.png
+```
+
+#### Example 4: YAML Pipeline (v0.2.0+)
+
+Create a `pipeline.yaml` file:
+
+```yaml
+name: Gradient Pipeline
+steps:
+  - kind: generate
+    generator: shapes
+    params:
+      type: gradient
+      width: 1200
+      height: 630
+    out: gradient
+
+  - kind: transform
+    in: gradient
+    op: convert
+    to: image/png
+    params: {}
+    out: png
+
+  - kind: save
+    in: png
+    destination: ./output/gradient.png
+```
+
+Run it:
+
+```bash
+imgflo run pipeline.yaml
 ```
 
 ### Available Shapes
@@ -118,17 +151,10 @@ imgflo generate --generator shapes --params '{"type":"pattern","patternType":"do
 ```typescript
 import createClient from 'imgflo';
 
-const imgflo = createClient({
-  store: {
-    default: 's3',
-    s3: {
-      region: 'us-east-1',
-      bucket: 'my-images'
-    }
-  }
-});
+// Zero-config filesystem (default)
+const imgflo = createClient();
 
-// Generate → Convert → Upload
+// Generate → Convert → Save
 const svg = await imgflo.generate({
   generator: 'shapes',
   params: { type: 'gradient', width: 1200, height: 630 }
@@ -140,10 +166,37 @@ const png = await imgflo.transform({
   to: 'image/png'
 });
 
-const result = await imgflo.upload({
-  blob: png,
-  key: 'images/gradient.png'
+// Save to local filesystem (default)
+const result = await imgflo.save(png, './output/gradient.png');
+
+console.log(result.location); // /absolute/path/to/output/gradient.png
+```
+
+#### Using S3
+
+```typescript
+import createClient from 'imgflo';
+
+const imgflo = createClient({
+  save: {
+    default: 's3',
+    s3: {
+      region: 'us-east-1',
+      bucket: 'my-images'
+    }
+  }
 });
+
+const png = await imgflo.generate({
+  generator: 'shapes',
+  params: { type: 'gradient', width: 1200, height: 630 }
+});
+
+// Save to S3 using protocol
+const result = await imgflo.save(png, 's3://my-images/gradient.png');
+
+// Or use default provider
+const result2 = await imgflo.save(png, 'gradient.png');
 
 console.log(result.url); // Use this URL in Google Slides, emails, etc.
 ```
@@ -153,7 +206,7 @@ console.log(result.url); // Use this URL in Google Slides, emails, etc.
 When a user asks you to create images for slides:
 
 1. Generate the images with imgflo
-2. Upload to S3 to get URLs
+2. Save to S3 to get URLs
 3. Use the Google Slides MCP to insert the images
 
 ```typescript
@@ -175,10 +228,7 @@ const titlePng = await imgflo.transform({
   to: 'image/png'
 });
 
-const result = await imgflo.upload({
-  blob: titlePng,
-  key: 'slides/title.png'
-});
+const result = await imgflo.save(titlePng, 's3://my-bucket/slides/title.png');
 
 // Now use result.url with Google Slides MCP
 ```
@@ -191,8 +241,12 @@ Create `imgflo.config.ts` in the project root:
 import { defineConfig } from 'imgflo/config';
 
 export default defineConfig({
-  store: {
+  save: {
     default: 's3',
+    fs: {
+      baseDir: './output',
+      chmod: 0o644
+    },
     s3: {
       region: process.env.AWS_REGION,
       bucket: process.env.S3_BUCKET
@@ -201,16 +255,37 @@ export default defineConfig({
 });
 ```
 
+**Zero-config default**: The filesystem provider is registered automatically, so you can use `imgflo.save()` without any configuration.
+
 ### Environment Variables
 
 ```bash
-# Required for S3 uploads
+# Required for S3 saves
 AWS_REGION=us-east-1
 S3_BUCKET=your-bucket-name
 
 # Optional: AWS credentials (if not using IAM roles)
 AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
+```
+
+### Smart Destination Routing (v0.2.0+)
+
+The `save()` method automatically detects the storage provider:
+
+```typescript
+// Filesystem (relative or absolute paths)
+await client.save(img, './output/image.png');
+await client.save(img, '/absolute/path/image.png');
+
+// S3 via protocol
+await client.save(img, 's3://bucket/key.png');
+
+// Use configured default
+const client = createClient({
+  save: { default: 's3', s3: { bucket: 'my-bucket' } }
+});
+await client.save(img, 'image.png'); // Uses S3
 ```
 
 ### Troubleshooting

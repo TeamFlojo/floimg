@@ -10,7 +10,7 @@ import createClient from "../src/index.js";
 
 async function createSlideImages() {
   const imgflo = createClient({
-    store: {
+    save: {
       default: "s3",
       s3: {
         region: process.env.AWS_REGION || "us-east-1",
@@ -38,12 +38,9 @@ async function createSlideImages() {
     to: "image/png",
   });
 
-  const titleBgResult = await imgflo.upload({
-    blob: titleBgPng,
-    key: "slides/title-background.png",
-  });
+  const titleBgResult = await imgflo.save(titleBgPng, "slides/title-background.png");
 
-  console.log(`✓ Title background: ${titleBgResult.url}`);
+  console.log(`✓ Title background: ${titleBgResult.location}`);
 
   // Slide 2: Content slide with pattern
   console.log("\n📊 Creating content slide background...");
@@ -63,12 +60,9 @@ async function createSlideImages() {
     to: "image/png",
   });
 
-  const contentBgResult = await imgflo.upload({
-    blob: contentBgPng,
-    key: "slides/content-background.png",
-  });
+  const contentBgResult = await imgflo.save(contentBgPng, "slides/content-background.png");
 
-  console.log(`✓ Content background: ${contentBgResult.url}`);
+  console.log(`✓ Content background: ${contentBgResult.location}`);
 
   // Slide 3: Accent graphic
   console.log("\n📊 Creating accent graphic...");
@@ -88,23 +82,20 @@ async function createSlideImages() {
     to: "image/png",
   });
 
-  const accentResult = await imgflo.upload({
-    blob: accentPng,
-    key: "slides/accent-circle.png",
-  });
+  const accentResult = await imgflo.save(accentPng, "slides/accent-circle.png");
 
-  console.log(`✓ Accent graphic: ${accentResult.url}`);
+  console.log(`✓ Accent graphic: ${accentResult.location}`);
 
-  console.log("\n✨ All slide images generated and uploaded!");
+  console.log("\n✨ All slide images generated and saved!");
   console.log("\nURLs for Google Slides:");
-  console.log(`1. ${titleBgResult.url}`);
-  console.log(`2. ${contentBgResult.url}`);
-  console.log(`3. ${accentResult.url}`);
+  console.log(`1. ${titleBgResult.location}`);
+  console.log(`2. ${contentBgResult.location}`);
+  console.log(`3. ${accentResult.location}`);
 
   return {
-    titleBackground: titleBgResult.url,
-    contentBackground: contentBgResult.url,
-    accent: accentResult.url,
+    titleBackground: titleBgResult.location,
+    contentBackground: contentBgResult.location,
+    accent: accentResult.location,
   };
 }
 

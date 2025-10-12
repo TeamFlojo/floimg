@@ -74,9 +74,12 @@ The MCP server exposes three tools:
 
 Generate an image using a specified generator.
 
+**Important (v0.2.0+)**: This tool now auto-saves the generated image to avoid MCP's 25K token limit. Instead of returning base64-encoded bytes, it returns the saved image location.
+
 **Parameters:**
-- `generator` (string, default: "shapes") - Generator to use
+- `intent` (string, required) - Natural language description of what to generate
 - `params` (object, default: {}) - Generator-specific parameters
+- `destination` (string, optional) - Where to save the image (default: `generated/timestamp-generator.ext`)
 
 **For the 'shapes' generator:**
 - `type` - Shape type: "gradient", "circle", "rectangle", or "pattern"
@@ -87,18 +90,23 @@ Generate an image using a specified generator.
 - `rx` - Border radius for rectangles
 - `patternType` - Pattern type: "dots", "stripes", or "grid"
 
-**Returns:**
+**Returns (v0.2.0+):**
 ```json
 {
   "success": true,
-  "blob": {
-    "bytes": "base64-encoded-image-data",
+  "generator": "shapes",
+  "image": {
+    "location": "/absolute/path/to/generated/1234567890-shapes.svg",
+    "provider": "fs",
     "mime": "image/svg+xml",
     "width": 1200,
-    "height": 630
+    "height": 630,
+    "size": 2048
   }
 }
 ```
+
+**Why the change?** Images are often >100KB, which exceeds MCP's 25K token limit (~100KB). Auto-saving prevents "response exceeds maximum" errors.
 
 ### 2. `transform_image`
 
@@ -111,8 +119,9 @@ Transform an image (convert format, resize, etc.).
 - `to` (string) - Target MIME type for convert operation (e.g., "image/png")
 - `width` (number) - Target width for resize operation
 - `height` (number) - Target height for resize operation
+- `destination` (string, optional, v0.2.0+) - Auto-save for large transformations
 
-**Returns:**
+**Returns (without destination):**
 ```json
 {
   "success": true,
@@ -125,46 +134,67 @@ Transform an image (convert format, resize, etc.).
 }
 ```
 
-### 3. `upload_image`
+**Returns (with destination, v0.2.0+):**
+```json
+{
+  "success": true,
+  "image": {
+    "location": "/absolute/path/to/output.png",
+    "provider": "fs",
+    "mime": "image/png",
+    "width": 1200,
+    "height": 630,
+    "size": 45231
+  }
+}
+```
 
-Upload an image to configured storage and get a shareable URL.
+### 3. `save_image`
+
+Save an image to configured storage (filesystem or S3) and get location/URL.
 
 **Parameters:**
 - `imageBytes` (string, required) - Base64-encoded image bytes
 - `mime` (string, required) - MIME type (e.g., "image/png")
-- `key` (string, required) - Storage key/path (e.g., "slides/background.png")
-- `provider` (string, optional) - Storage provider ("s3" or "fs"), uses default if not specified
+- `destination` (string, required) - Where to save (e.g., "./output/image.png", "s3://bucket/key.png")
 
-**Returns:**
+**Returns (filesystem):**
 ```json
 {
   "success": true,
+  "location": "/absolute/path/to/output/image.png",
+  "provider": "fs",
+  "size": 45231
+}
+```
+
+**Returns (S3):**
+```json
+{
+  "success": true,
+  "location": "s3://my-bucket/slides/background.png",
+  "provider": "s3",
   "url": "https://my-bucket.s3.amazonaws.com/slides/background.png",
-  "key": "slides/background.png"
+  "size": 45231
 }
 ```
 
 ## Usage Examples
 
-### Example 1: Generate and Upload (Claude Code)
+### Example 1: Generate and Save (Claude Code)
 
-User: "Create a gradient background for my slides and upload it to S3"
+User: "Create a gradient background for my slides"
 
 Claude Code will:
-1. Call `generate_image` with gradient parameters
-2. Call `transform_image` to convert SVG → PNG
-3. Call `upload_image` to upload to S3
-4. Return the shareable URL
+1. Call `generate_image` with intent "gradient background for slides"
+2. Image is auto-saved to `generated/timestamp-shapes.svg`
+3. Return the saved location
 
-### Example 2: Complete Workflow
-
-User: "Generate a purple gradient, convert to PNG, and upload as slides/title-bg.png"
-
-Claude Code workflow:
+**v0.2.0+ workflow:**
 ```javascript
-// 1. Generate gradient
+// 1. Generate (auto-saves)
 const generated = await generate_image({
-  generator: "shapes",
+  intent: "gradient background for slides",
   params: {
     type: "gradient",
     width: 1920,
@@ -174,22 +204,47 @@ const generated = await generate_image({
   }
 });
 
-// 2. Convert to PNG
+// generated.image.location contains the saved file path
+// No need to manually save - already saved!
+```
+
+### Example 2: Generate → Transform → Save to S3
+
+User: "Generate a purple gradient, convert to PNG, and save to S3 as slides/title-bg.png"
+
+**v0.2.0+ workflow:**
+```javascript
+// 1. Generate (auto-saved to filesystem)
+const generated = await generate_image({
+  intent: "purple gradient",
+  params: {
+    type: "gradient",
+    width: 1920,
+    height: 1080,
+    color1: "#667eea",
+    color2: "#764ba2"
+  }
+});
+
+// 2. Read the saved file and transform
+const fileBytes = fs.readFileSync(generated.image.location);
 const converted = await transform_image({
-  imageBytes: generated.blob.bytes,
-  mime: generated.blob.mime,
+  imageBytes: fileBytes.toString('base64'),
+  mime: generated.image.mime,
   operation: "convert",
-  to: "image/png"
+  to: "image/png",
+  destination: "./temp-converted.png"  // Auto-save large PNG
 });
 
-// 3. Upload to S3
-const uploaded = await upload_image({
-  imageBytes: converted.blob.bytes,
-  mime: converted.blob.mime,
-  key: "slides/title-bg.png"
+// 3. Save to S3
+const savedBytes = fs.readFileSync(converted.image.location);
+const saved = await save_image({
+  imageBytes: savedBytes.toString('base64'),
+  mime: converted.image.mime,
+  destination: "s3://my-bucket/slides/title-bg.png"
 });
 
-// Returns: { url: "https://bucket.s3.amazonaws.com/slides/title-bg.png" }
+// Returns: { url: "https://my-bucket.s3.amazonaws.com/slides/title-bg.png" }
 ```
 
 ### Example 3: Batch Generation
@@ -233,9 +288,9 @@ Claude Code can call the tools in parallel to generate and upload multiple image
 
 3. **Set default storage:**
    ```bash
-   imgflo config set store.default s3
-   imgflo config set store.s3.bucket your-bucket-name
-   imgflo config set store.s3.region us-east-1
+   imgflo config set save.default s3
+   imgflo config set save.s3.bucket your-bucket-name
+   imgflo config set save.s3.region us-east-1
    ```
 
 ### AWS Credentials
@@ -298,7 +353,7 @@ You can use a project-specific config file:
 
 ### Local Development
 
-For local testing without S3:
+For local testing without S3 (filesystem is the default):
 
 ```json
 {
@@ -307,30 +362,33 @@ For local testing without S3:
       "type": "stdio",
       "command": "imgflo-mcp",
       "env": {
-        "IMGFLO_STORE_DEFAULT": "fs",
-        "IMGFLO_STORE_FS_BASE_PATH": "./output",
-        "IMGFLO_STORE_FS_BASE_URL": "http://localhost:3000/images"
+        "IMGFLO_SAVE_DEFAULT": "fs",
+        "IMGFLO_SAVE_FS_BASE_DIR": "./output"
       }
     }
   }
 }
 ```
 
+**Note (v0.2.0+)**: Filesystem is registered by default - no configuration needed for local development!
+
 ## Best Practices
 
-### 1. Use Descriptive Keys
+### 1. Use Descriptive Destinations
 
 ```javascript
 // Good
-key: "slides/presentation-2024/title-background.png"
+destination: "slides/presentation-2024/title-background.png"
 
 // Less descriptive
-key: "image1.png"
+destination: "image1.png"
 ```
 
 ### 2. Chain Operations Efficiently
 
-Let Claude Code handle the workflow - it can automatically chain generate → transform → upload based on your request.
+Let Claude Code handle the workflow - it can automatically chain generate → transform → save based on your request.
+
+**v0.2.0+ Note**: Since `generate_image` auto-saves, you may not need separate save steps for generated images.
 
 ### 3. Specify Image Dimensions
 

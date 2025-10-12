@@ -1,6 +1,6 @@
 {
   "name": "imgflo-qr",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "QR code generator for imgflo using qrcode library",
   "type": "module",
   "main": "./dist/index.js",
@@ -39,7 +39,7 @@
     "directory": "packages/imgflo-qr"
   },
   "peerDependencies": {
-    "imgflo": "workspace:*"
+    "imgflo": "^0.1.0-alpha.1"
   },
   "dependencies": {
     "qrcode": "^1.5.4"
@@ -47,7 +47,7 @@
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@types/qrcode": "^1.5.5",
-    "imgflo": "workspace:*",
+    "imgflo": "^0.1.0-alpha.1",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   },

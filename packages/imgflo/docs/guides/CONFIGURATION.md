@@ -50,8 +50,12 @@ Create `imgflo.config.ts` in your project root:
 import { defineConfig } from 'imgflo/config';
 
 export default defineConfig({
-  store: {
+  save: {
     default: 's3',
+    fs: {
+      baseDir: './output',
+      chmod: 0o644
+    },
     s3: {
       region: 'us-east-1',
       bucket: 'my-project-images',
@@ -70,8 +74,11 @@ Or use JSON (`.imgflorc.json`):
 
 ```json
 {
-  "store": {
+  "save": {
     "default": "s3",
+    "fs": {
+      "baseDir": "./output"
+    },
     "s3": {
       "region": "us-east-1",
       "bucket": "my-project-images"
@@ -96,15 +103,17 @@ export OPENAI_API_KEY=sk-...
 
 ```typescript
 {
-  store: {
+  save: {
     default: 's3',
     s3: {
-      region: 'us-east-1',           // AWS region
+      region: 'us-east-1',             // AWS region
       bucket: 'my-bucket',             // S3 bucket name
-      accessKeyId: '...',              // Optional: AWS access key
-      secretAccessKey: '...',          // Optional: AWS secret key
+      credentials: {                   // Optional: AWS credentials
+        accessKeyId: '...',
+        secretAccessKey: '...'
+      },
       endpoint: 'https://...',         // Optional: Custom S3 endpoint
-      publicUrl: 'https://cdn.../\     // Optional: CDN URL for uploaded files
+      publicUrl: 'https://cdn.../'     // Optional: CDN URL for saved files
     }
   }
 }
@@ -112,19 +121,21 @@ export OPENAI_API_KEY=sk-...
 
 Via CLI:
 ```bash
-imgflo config set s3.bucket my-bucket
-imgflo config set s3.region us-west-2
+imgflo config set save.s3.bucket my-bucket
+imgflo config set save.s3.region us-west-2
 ```
 
-#### Filesystem Storage
+#### Filesystem Storage (v0.2.0+)
+
+Zero configuration required - filesystem provider is registered by default:
 
 ```typescript
 {
-  store: {
-    default: 'fs',
+  save: {
+    default: 'fs',  // Optional: set filesystem as default
     fs: {
-      basePath: './output',            // Local directory
-      baseUrl: 'https://example.com'   // Optional: Base URL for files
+      baseDir: './output',  // Optional: base directory (default: './')
+      chmod: 0o644          // Optional: file permissions
     }
   }
 }
@@ -155,15 +166,18 @@ imgflo config set openai.apiKey sk-...
 
 All config can be overridden via CLI arguments:
 
-### Upload Command
+### Save Command
 
 ```bash
-# Override S3 bucket for this upload
-imgflo upload \
+# Save to filesystem (default)
+imgflo save \
   --in image.png \
-  --key test.png \
-  --bucket different-bucket \
-  --region us-west-1
+  --out ./output/test.png
+
+# Save to S3 using protocol
+imgflo save \
+  --in image.png \
+  --out s3://different-bucket/test.png
 ```
 
 ### Generate Command
@@ -185,21 +199,21 @@ imgflo generate \
 imgflo config get
 
 # Show specific value
-imgflo config get s3.bucket
-imgflo config get store
+imgflo config get save.s3.bucket
+imgflo config get save
 ```
 
 ### Set Configuration
 
 ```bash
 # Set S3 bucket
-imgflo config set s3.bucket my-new-bucket
+imgflo config set save.s3.bucket my-new-bucket
 
 # Set S3 region
-imgflo config set s3.region eu-west-1
+imgflo config set save.s3.region eu-west-1
 
 # Set OpenAI key
-imgflo config set openai.apiKey sk-...
+imgflo config set ai.openai.apiKey sk-...
 ```
 
 ### Find Config File Locations
@@ -232,29 +246,34 @@ Shows:
 ```bash
 # In project A
 cd ~/projects/website-a
-echo '{"store":{"s3":{"bucket":"website-a-images"}}}' > .imgflorc.json
-imgflo upload --in logo.png --key logo.png
+echo '{"save":{"default":"s3","s3":{"bucket":"website-a-images"}}}' > .imgflorc.json
+imgflo save --in logo.png --out logo.png
 
 # In project B
 cd ~/projects/website-b
-echo '{"store":{"s3":{"bucket":"website-b-images"}}}' > .imgflorc.json
-imgflo upload --in logo.png --key logo.png
+echo '{"save":{"default":"s3","s3":{"bucket":"website-b-images"}}}' > .imgflorc.json
+imgflo save --in logo.png --out logo.png
 ```
 
-### Example 2: Global + Override
+### Example 2: Global + Smart Routing
 
 ```bash
 # Set global default
-imgflo config set s3.bucket default-bucket
-imgflo config set s3.region us-east-1
+imgflo config set save.default s3
+imgflo config set save.s3.bucket default-bucket
+imgflo config set save.s3.region us-east-1
 
-# Use global config
-imgflo upload --in image.png --key test.png
-# Uploads to: default-bucket
+# Use global config (uses default S3)
+imgflo save --in image.png --out test.png
+# Saves to: s3://default-bucket/test.png
 
-# Override for one upload
-imgflo upload --in image.png --key test.png --bucket special-bucket
-# Uploads to: special-bucket
+# Override with explicit destination
+imgflo save --in image.png --out s3://special-bucket/test.png
+# Saves to: s3://special-bucket/test.png
+
+# Save to filesystem instead
+imgflo save --in image.png --out ./local/test.png
+# Saves to: ./local/test.png
 ```
 
 ### Example 3: Local + Environment
@@ -265,7 +284,7 @@ Create `imgflo.config.ts`:
 import { defineConfig } from 'imgflo/config';
 
 export default defineConfig({
-  store: {
+  save: {
     default: 's3',
     s3: {
       // Bucket from environment
@@ -279,11 +298,11 @@ export default defineConfig({
 Then:
 ```bash
 export S3_BUCKET=production-images
-imgflo upload --in image.png --key prod.png
-# Uses: production-images bucket
+imgflo save --in image.png --out prod.png
+# Uses: s3://production-images/prod.png
 
-S3_BUCKET=staging-images imgflo upload --in image.png --key staging.png
-# Uses: staging-images bucket
+S3_BUCKET=staging-images imgflo save --in image.png --out staging.png
+# Uses: s3://staging-images/staging.png
 ```
 
 ## Security Best Practices
@@ -324,11 +343,14 @@ import { defineConfig } from 'imgflo/config';
 
 export default defineConfig({
   // TypeScript will autocomplete and type-check this
-  store: {
+  save: {
     default: 's3',  // Autocomplete: 's3' | 'fs'
     s3: {
       bucket: '',   // Autocomplete: required
       region: '',   // Autocomplete: required
+    },
+    fs: {
+      baseDir: ''   // Autocomplete: optional
     }
   }
 });
@@ -336,24 +358,26 @@ export default defineConfig({
 
 ## Troubleshooting
 
-### "No storage provider configured"
+### "No save provider configured"
 
-Fix:
+Fix (v0.2.0+): Filesystem provider is registered by default - no configuration needed!
+
+For S3:
 ```bash
 # Set S3 bucket
-imgflo config set s3.bucket your-bucket-name
-imgflo config set s3.region us-east-1
+imgflo config set save.s3.bucket your-bucket-name
+imgflo config set save.s3.region us-east-1
 
 # Or use environment variables
 export S3_BUCKET=your-bucket-name
 export AWS_REGION=us-east-1
 ```
 
-### "Access Denied" when uploading to S3
+### "Access Denied" when saving to S3
 
 Check:
-1. Bucket name is correct: `imgflo config get s3.bucket`
-2. Region is correct: `imgflo config get s3.region`
+1. Bucket name is correct: `imgflo config get save.s3.bucket`
+2. Region is correct: `imgflo config get save.s3.region`
 3. AWS credentials are valid: `aws s3 ls s3://your-bucket`
 4. IAM permissions allow `s3:PutObject`
 
@@ -382,23 +406,55 @@ Create it manually or use:
 imgflo config init
 ```
 
-## Migration from Environment Variables
+## Migration from v0.1.x to v0.2.0
 
-If you're currently using environment variables, migrate like this:
+### Breaking Changes
 
-```bash
-# Old way
-export S3_BUCKET=my-bucket
-export AWS_REGION=us-east-1
-imgflo upload --in image.png --key test.png
+The configuration structure changed from `store` to `save`:
 
-# New way (global config)
-imgflo config set s3.bucket my-bucket
-imgflo config set s3.region us-east-1
-imgflo upload --in image.png --key test.png
+```typescript
+// OLD (v0.1.x)
+{
+  store: {
+    default: 's3',
+    s3: { bucket: 'my-bucket', region: 'us-east-1' }
+  }
+}
 
-# Remove environment variables
-unset S3_BUCKET AWS_REGION
+// NEW (v0.2.0+)
+{
+  save: {
+    default: 's3',
+    fs: { baseDir: './output' },  // NEW: Filesystem support
+    s3: { bucket: 'my-bucket', region: 'us-east-1' }
+  }
+}
 ```
 
-Now it just works without needing to set env vars every time!
+### CLI Command Changes
+
+```bash
+# OLD
+imgflo upload --in image.png --key test.png
+
+# NEW
+imgflo save --in image.png --out test.png
+imgflo save --in image.png --out s3://bucket/test.png
+imgflo save --in image.png --out ./output/test.png
+```
+
+### Config File Migration
+
+Update your config files:
+
+```bash
+# Find config files
+imgflo config path
+
+# Update global config
+imgflo config set save.s3.bucket my-bucket
+imgflo config set save.s3.region us-east-1
+
+# Or manually edit config files:
+# Change "store" → "save" throughout
+```

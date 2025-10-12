@@ -17,7 +17,7 @@ async function main() {
         quality: "standard",
       },
     },
-    store: {
+    save: {
       default: "s3",
       s3: {
         region: process.env.AWS_REGION || "us-east-1",
@@ -56,8 +56,8 @@ async function main() {
   });
   console.log(`Generated HD image: ${hdImage.width}x${hdImage.height}\n`);
 
-  // Example 3: Generate and upload
-  console.log("3. Generating and uploading to S3...");
+  // Example 3: Generate and save
+  console.log("3. Generating and saving to S3...");
   const heroImage = await imgflo.generate({
     generator: "openai",
     params: {
@@ -68,11 +68,8 @@ async function main() {
     },
   });
 
-  const uploadResult = await imgflo.upload({
-    blob: heroImage,
-    key: "examples/openai-hero.png",
-  });
-  console.log(`Uploaded to: ${uploadResult.url}\n`);
+  const saveResult = await imgflo.save(heroImage, "s3://bucket/examples/openai-hero.png");
+  console.log(`Saved to: ${saveResult.location}\n`);
 
   // Example 4: Using DALL-E 2 (cheaper, faster)
   console.log("4. Using DALL-E 2 for quick generation...");

@@ -3,6 +3,8 @@ import { ShapesProvider } from "./providers/svg/index.js";
 import { OpenAIGenerator } from "./providers/ai/index.js";
 import { SharpTransformProvider } from "./providers/transform/index.js";
 import { S3Provider, FsProvider } from "./providers/store/index.js";
+import FsSaveProvider from "./providers/save/FsSaveProvider.js";
+import S3SaveProvider from "./providers/save/S3SaveProvider.js";
 import type { ImgfloConfig } from "./core/types.js";
 
 // Export types
@@ -43,6 +45,11 @@ export { SharpTransformProvider } from "./providers/transform/index.js";
 export { S3Provider, FsProvider } from "./providers/store/index.js";
 export type { S3ProviderConfig, FsProviderConfig } from "./providers/store/index.js";
 
+// Export save providers
+export { default as FsSaveProvider } from "./providers/save/FsSaveProvider.js";
+export { default as S3SaveProvider } from "./providers/save/S3SaveProvider.js";
+export type { S3SaveProviderConfig } from "./providers/save/S3SaveProvider.js";
+
 /**
  * Create an imgflo client with automatic provider registration
  */
@@ -61,7 +68,17 @@ export function createClient(config: ImgfloConfig = {}): Imgflo {
   // Register built-in transform providers
   client.registerTransformProvider(new SharpTransformProvider());
 
-  // Register storage providers based on config
+  // Register save providers (NEW)
+  // Always register filesystem provider (default, zero-config)
+  const fsConfig = config.save?.fs || {};
+  client.registerSaveProvider(new FsSaveProvider(fsConfig));
+
+  // Register S3 save provider if configured
+  if (config.save?.s3) {
+    client.registerSaveProvider(new S3SaveProvider(config.save.s3));
+  }
+
+  // Register old storage providers for backwards compatibility (deprecated)
   if (config.store?.s3) {
     const s3Config = config.store.s3 as any;
     client.registerStoreProvider(new S3Provider(s3Config));

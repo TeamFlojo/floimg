@@ -59,7 +59,30 @@ export interface ImgfloConfig {
     default?: string;
     [providerName: string]: unknown;
   };
-  /** Storage provider configuration */
+  /** Save provider configuration (filesystem, S3, R2, etc.) */
+  save?: {
+    default?: string;
+    fs?: {
+      baseDir?: string;
+      chmod?: number;
+    };
+    s3?: {
+      bucket: string;
+      region: string;
+      endpoint?: string;
+      credentials?: {
+        accessKeyId: string;
+        secretAccessKey: string;
+      };
+    };
+    r2?: {
+      accountId: string;
+      accessKeyId: string;
+      secretAccessKey: string;
+    };
+    [providerName: string]: unknown;
+  };
+  /** @deprecated Use save instead */
   store?: {
     default?: string;
     [providerName: string]: unknown;
@@ -164,7 +187,56 @@ export interface TransformInput {
 }
 
 /**
+ * Input for save operation (supports filesystem and cloud)
+ */
+export interface SaveInput {
+  /** Destination path or key */
+  path: string;
+  /** Save provider name (auto-detected if not specified) */
+  provider?: string;
+  /** Overwrite existing file (default: true) */
+  overwrite?: boolean;
+  /** File permissions for filesystem (default: 0o644) */
+  chmod?: number;
+  /** Custom headers for cloud uploads */
+  headers?: Record<string, string>;
+  /** Custom metadata */
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Result from saving an image
+ */
+export interface SaveResult {
+  /** Provider used ('fs', 's3', 'r2', etc.) */
+  provider: string;
+  /** Location where saved (file path or URL) */
+  location: string;
+  /** File size in bytes */
+  size: number;
+  /** MIME type */
+  mime: MimeType;
+  /** Additional metadata */
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Save provider interface (unified for filesystem and cloud)
+ */
+export interface SaveProvider {
+  /** Provider name */
+  name: string;
+  /** Save an image */
+  save(input: {
+    blob: ImageBlob;
+    path: string;
+    [key: string]: unknown;
+  }): Promise<SaveResult>;
+}
+
+/**
  * Input for upload operation
+ * @deprecated Use save() instead
  */
 export interface UploadInput {
   /** Image blob to upload */
@@ -195,10 +267,10 @@ export type PipelineStep =
       out: string;
     }
   | {
-      kind: "upload";
+      kind: "save";
       provider?: string;
       in: string;
-      key: string;
+      destination: string;
       out?: string;
     };
 
@@ -224,6 +296,6 @@ export interface PipelineResult {
   step: PipelineStep;
   /** Output variable name */
   out: string;
-  /** Result value (ImageBlob or UploadResult) */
-  value: ImageBlob | UploadResult;
+  /** Result value (ImageBlob or SaveResult) */
+  value: ImageBlob | SaveResult;
 }

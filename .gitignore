@@ -17,3 +17,7 @@ test-*.svg
 test-*.png
 test-*.jpg
 test-*.webp
+
+# Generated output directories
+output/
+generated/

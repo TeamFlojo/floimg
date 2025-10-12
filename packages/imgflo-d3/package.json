@@ -1,6 +1,6 @@
 {
   "name": "imgflo-d3",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "D3 data visualization generator for imgflo using server-side rendering",
   "type": "module",
   "main": "./dist/index.js",
@@ -40,7 +40,7 @@
     "directory": "packages/imgflo-d3"
   },
   "peerDependencies": {
-    "imgflo": "workspace:*"
+    "imgflo": "^0.1.0-alpha.1"
   },
   "dependencies": {
     "d3": "^7.9.0",
@@ -50,7 +50,7 @@
     "@types/d3": "^7.4.3",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.10.2",
-    "imgflo": "workspace:*",
+    "imgflo": "^0.1.0-alpha.1",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   },

@@ -3,11 +3,14 @@ import type {
   ImageGenerator,
   TransformProvider,
   StoreProvider,
+  SaveProvider,
   GenerateInput,
   TransformInput,
   UploadInput,
+  SaveInput,
   ImageBlob,
   UploadResult,
+  SaveResult,
   Pipeline,
   PipelineResult,
 } from "./types.js";
@@ -31,6 +34,7 @@ export class Imgflo {
     generators: Record<string, ImageGenerator>;
     transform: Record<string, TransformProvider>;
     store: Record<string, StoreProvider>;
+    save: Record<string, SaveProvider>;
   };
 
   constructor(config: ImgfloConfig = {}) {
@@ -45,6 +49,7 @@ export class Imgflo {
       generators: {},
       transform: {},
       store: {},
+      save: {},
     };
 
     this.logger.info("Imgflo client initialized");
@@ -131,27 +136,65 @@ export class Imgflo {
   }
 
   /**
-   * Upload an image to cloud storage
+   * Save an image (filesystem or cloud) with smart destination routing
    */
-  async upload(input: UploadInput): Promise<UploadResult> {
-    const { blob, key, provider, headers } = input;
+  async save(
+    blob: ImageBlob,
+    destination: string | SaveInput
+  ): Promise<SaveResult> {
+    // Parse destination
+    const parsed = this.parseDestination(destination);
 
-    this.logger.info(`Uploading image to key: ${key}`);
+    this.logger.info(`Saving image with provider: ${parsed.provider} to ${parsed.path}`);
 
-    const providerName = provider || (this.config.store?.default as string);
-    if (!providerName) {
-      throw new ConfigurationError(
-        "No storage provider specified and no default configured"
-      );
+    // Get save provider
+    const saveProvider = this.providers.save[parsed.provider];
+    if (!saveProvider) {
+      throw new ProviderNotFoundError("save", parsed.provider);
     }
 
-    const storeProvider = this.providers.store[providerName];
-    if (!storeProvider) {
-      throw new ProviderNotFoundError("store", providerName);
-    }
-
-    return storeProvider.put({ key, blob, headers });
+    return saveProvider.save({
+      blob,
+      ...parsed,
+    });
   }
+
+  /**
+   * Parse destination string or object into provider and path
+   */
+  private parseDestination(destination: string | SaveInput): {
+    provider: string;
+    path: string;
+    [key: string]: unknown;
+  } {
+    // If it's an object, use it directly
+    if (typeof destination === "object") {
+      return {
+        provider: destination.provider || this.config.save?.default || "fs",
+        ...destination,
+      };
+    }
+
+    // Protocol-based routing (s3://, r2://, file://)
+    if (destination.includes("://")) {
+      const [protocol, rest] = destination.split("://");
+      return { provider: protocol, path: rest };
+    }
+
+    // Local path detection (starts with ./, /, ../)
+    if (
+      destination.startsWith("./") ||
+      destination.startsWith("/") ||
+      destination.startsWith("../")
+    ) {
+      return { provider: "fs", path: destination };
+    }
+
+    // Use default provider from config
+    const defaultProvider = this.config.save?.default || "fs";
+    return { provider: defaultProvider, path: destination };
+  }
+
 
   /**
    * Run a declarative pipeline of operations
@@ -160,7 +203,7 @@ export class Imgflo {
     this.logger.info(`Running pipeline: ${pipeline.name || "unnamed"}`);
 
     const results: PipelineResult[] = [];
-    const variables = new Map<string, ImageBlob | UploadResult>();
+    const variables = new Map<string, ImageBlob | SaveResult>();
 
     for (const step of pipeline.steps) {
       this.logger.debug(`Executing step: ${step.kind}`);
@@ -187,24 +230,23 @@ export class Imgflo {
         });
         variables.set(step.out, blob);
         results.push({ step, out: step.out, value: blob });
-      } else if (step.kind === "upload") {
+      } else if (step.kind === "save") {
         const inputBlob = variables.get(step.in);
         if (!inputBlob || !("bytes" in inputBlob)) {
           throw new ConfigurationError(
-            `Upload step references undefined or invalid variable: ${step.in}`
+            `Save step references undefined or invalid variable: ${step.in}`
           );
         }
 
-        const result = await this.upload({
-          blob: inputBlob as ImageBlob,
-          key: step.key,
-          provider: step.provider,
-        });
+        const result = await this.save(
+          inputBlob as ImageBlob,
+          step.provider ? { path: step.destination, provider: step.provider } : step.destination
+        );
 
         if (step.out) {
           variables.set(step.out, result);
         }
-        results.push({ step, out: step.out || step.key, value: result });
+        results.push({ step, out: step.out || step.destination, value: result });
       }
     }
 
@@ -229,7 +271,16 @@ export class Imgflo {
   }
 
   /**
+   * Register a custom save provider
+   */
+  registerSaveProvider(provider: SaveProvider): void {
+    this.providers.save[provider.name] = provider;
+    this.logger.debug(`Registered save provider: ${provider.name}`);
+  }
+
+  /**
    * Register a custom storage provider
+   * @deprecated Use registerSaveProvider() instead
    */
   registerStoreProvider(provider: StoreProvider): void {
     this.providers.store[provider.name] = provider;

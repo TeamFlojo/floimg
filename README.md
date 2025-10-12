@@ -5,9 +5,13 @@
 [![npm version](https://img.shields.io/npm/v/imgflo.svg?style=flat)](https://www.npmjs.com/package/imgflo)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**imgflo** is image generation glue that connects you to charts, diagrams, QR codes, screenshots, and more through a simple API. Use it from **code**, **command line**, or **AI assistants**.
+**imgflo** is image generation glue that lets you **describe the image you need** and handles the rest. Whether you're using **natural language** (via MCP), **code** (TypeScript/JS), or **CLI** (scripts/automation)—imgflo figures out how to make it.
+
+Need a chart? A diagram? A QR code? A screenshot? An AI-generated image? Just describe it. The same plugins work across all three interfaces, from quick one-liners to complex multi-step pipelines with transforms and cloud storage.
 
 ## Three Ways to Use imgflo
+
+All three interfaces use the **same plugins** and **same underlying engine**. Choose based on your workflow:
 
 ### 1. 📚 As a Library (For Developers)
 
@@ -29,7 +33,7 @@ const qrCode = await imgflo.generate({
   params: { text: 'https://example.com', width: 300 }
 });
 
-await imgflo.upload({ blob: qrCode, key: 'qr.png' });
+await imgflo.save(qrCode, './qr.png');
 ```
 
 **→ Use when:** Building applications, need programmatic control, want type safety
@@ -61,14 +65,14 @@ imgflo doctor
 
 ### 3. 🤖 As an MCP Server (For AI Agents)
 
-Connect to Claude Code:
+Connect to Claude Code and generate images with **natural language**:
 
 ```bash
 npm install -g imgflo imgflo-qr imgflo-quickchart imgflo-d3 imgflo-mermaid
 imgflo mcp install  # Generates config
 ```
 
-Add to Claude Code, then just talk naturally:
+Then just talk naturally to Claude:
 
 > **You:** "Create a QR code for https://example.com"
 >
@@ -78,23 +82,46 @@ Add to Claude Code, then just talk naturally:
 >
 > **Claude:** *Uses imgflo automatically → generates chart*
 
-**→ Use when:** Working with AI assistants, want natural language, no code needed
+> **You:** "Generate a sunset over mountains with DALL-E"
+>
+> **Claude:** *Uses imgflo's OpenAI generator → generates AI image*
+
+**→ Use when:** Working with AI assistants, describing images in natural language, rapid prototyping
 
 **[Full MCP Setup Guide →](./packages/imgflo/docs/guides/MCP_SERVER.md)**
 
 ---
 
+## Just Describe What You Need
+
+**The core idea**: You describe the image you need, imgflo makes it happen.
+
+| What You Want | How imgflo Handles It |
+|---------------|----------------------|
+| *"Create a bar chart showing monthly sales"* | Routes to **quickchart** → generates Chart.js visualization |
+| *"Make a QR code for my website"* | Routes to **qr** generator → creates scannable code |
+| *"Draw a flowchart of our auth system"* | Routes to **mermaid** → generates diagram from description |
+| *"Show me a sunset over mountains"* | Routes to **openai** → generates with DALL-E |
+| *"Capture a screenshot of example.com"* | Routes to **screenshot** → uses Playwright |
+
+**Via MCP**: Talk naturally to Claude, it routes to the right generator automatically.
+**Via code/CLI**: Specify the generator directly when you want precise control, or let natural language processing (future) figure it out.
+
+---
+
 ## What Can imgflo Generate?
 
-| Generator | Description | Example |
-|-----------|-------------|---------|
-| **shapes** | SVG shapes, gradients, patterns | `{type: 'gradient'}` |
-| **openai** | DALL-E AI images | `{prompt: 'sunset'}` |
-| **quickchart** | Chart.js charts (bar, line, pie) | `{type: 'bar', data: {...}}` |
-| **d3** | Custom data visualizations | `{render: fn, data: [...]}` |
-| **mermaid** | Flowcharts, diagrams | `{code: 'graph TD...'}` |
-| **qr** | QR codes | `{text: 'https://...'}` |
-| **screenshot** | Website captures | `{url: 'https://...'}` |
+| Generator | Description | Natural Language Example |
+|-----------|-------------|--------------------------|
+| **openai** | DALL-E AI images from prompts | *"sunset over mountains"* |
+| **quickchart** | Chart.js charts (bar, line, pie) | *"bar chart with Q1-Q4 revenue"* |
+| **mermaid** | Flowcharts, diagrams, sequences | *"flowchart for login process"* |
+| **d3** | Custom data visualizations | *"scatter plot of sales data"* |
+| **qr** | QR codes | *"QR code for example.com"* |
+| **screenshot** | Website captures | *"screenshot of example.com"* |
+| **shapes** | SVG shapes, gradients, patterns | *"purple gradient background"* |
+
+**All generators work with natural language (MCP), structured params (code), or CLI arguments.**
 
 ### Installation
 
@@ -206,7 +233,7 @@ import createClient from 'imgflo';
 import quickchart from 'imgflo-quickchart';
 
 const imgflo = createClient({
-  store: {
+  save: {
     default: 's3',
     s3: {
       bucket: 'my-images',
@@ -230,11 +257,8 @@ const png = await imgflo.transform({
   to: 'image/png'
 });
 
-// 3. Upload
-const result = await imgflo.upload({
-  blob: png,
-  key: 'charts/revenue.png'
-});
+// 3. Save
+const result = await imgflo.save(png, 'charts/revenue.png');
 
 console.log(result.url); // https://...
 ```
@@ -257,8 +281,12 @@ imgflo generate --generator shapes --params '{"type":"gradient"}' --out bg.svg
 # Transform images
 imgflo transform --input bg.svg --operation convert --to image/png --out bg.png
 
-# Upload to S3
-imgflo upload --input qr.png --key images/qr.png
+# Save to filesystem or S3
+imgflo save --in qr.png --out ./images/qr.png
+imgflo save --in qr.png --out s3://my-bucket/images/qr.png
+
+# Run YAML pipelines (v0.2.0+)
+imgflo run pipeline.yaml
 
 # Check status
 imgflo doctor
@@ -365,8 +393,12 @@ Create `imgflo.config.ts` or `.imgflorc.json`:
 
 ```typescript
 export default {
-  store: {
+  save: {
     default: 's3',
+    fs: {
+      baseDir: './output',
+      chmod: 0o644
+    },
     s3: {
       bucket: process.env.S3_BUCKET,
       region: 'us-east-1'
@@ -426,7 +458,7 @@ imgflo config init
 - ✅ **AI Images** - OpenAI DALL-E 2 & 3
 - ✅ **Shapes** - SVG gradients, circles, rectangles, patterns
 - ✅ **Transform** - Convert SVG → PNG/JPEG/WebP/AVIF
-- ✅ **Upload** - S3, R2, Tigris, filesystem
+- ✅ **Save** - S3, R2, Tigris, filesystem (smart destination routing)
 - ✅ **CLI** - Complete command-line interface
 - ✅ **MCP** - Claude Code integration
 - ✅ **TypeScript** - Full type safety

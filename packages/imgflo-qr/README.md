@@ -27,9 +27,11 @@ const qrCode = await imgflo.generate({
   }
 });
 
-// Upload to S3
-const result = await imgflo.upload({ blob: qrCode, key: 'qr/github.png' });
-console.log(result.url);
+// Save to filesystem or S3
+const result = await imgflo.save(qrCode, './output/qr-github.png');
+// Or save to S3:
+// const result = await imgflo.save(qrCode, 's3://my-bucket/qr/github.png');
+console.log(result.location);
 ```
 
 ## Examples

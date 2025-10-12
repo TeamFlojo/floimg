@@ -3,7 +3,8 @@
 import { Command } from "commander";
 import { generateCommand } from "./commands/generate.js";
 import { transformCommand } from "./commands/transform.js";
-import { uploadCommand } from "./commands/upload.js";
+import { saveCommand } from "./commands/save.js";
+import { runCommand } from "./commands/run.js";
 import { configCommand } from "./commands/config.js";
 import { pluginsCommand } from "./commands/plugins.js";
 import { mcpCommand } from "./commands/mcp.js";
@@ -34,7 +35,8 @@ program
 
 program.addCommand(generateCommand);
 program.addCommand(transformCommand);
-program.addCommand(uploadCommand);
+program.addCommand(saveCommand);
+program.addCommand(runCommand);
 program.addCommand(configCommand);
 program.addCommand(pluginsCommand);
 program.addCommand(mcpCommand);

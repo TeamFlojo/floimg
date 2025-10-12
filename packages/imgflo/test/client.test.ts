@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Imgflo } from '../src/core/client.js';
-import type { ImageGenerator, TransformProvider, StoreProvider, ImageBlob } from '../src/core/types.js';
+import type { ImageGenerator, TransformProvider, StoreProvider, SaveProvider, ImageBlob } from '../src/core/types.js';
 
 // Mock generator
 const mockGenerator: ImageGenerator = {
@@ -43,6 +43,19 @@ const mockStoreProvider: StoreProvider = {
       url: `https://example.com/${input.key}`,
       key: input.key,
       provider: 'mock-store',
+    };
+  },
+};
+
+// Mock save provider
+const mockSaveProvider: SaveProvider = {
+  name: 'mock-save',
+  async save(input: { blob: ImageBlob; path: string; [key: string]: unknown }) {
+    return {
+      provider: 'mock-save',
+      location: `https://example.com/${input.path}`,
+      size: input.blob.bytes.length,
+      mime: input.blob.mime,
     };
   },
 };
@@ -269,7 +282,7 @@ describe('Imgflo Core Client', () => {
     });
   });
 
-  describe('Image Upload', () => {
+  describe('Image Save', () => {
     let testBlob: ImageBlob;
 
     beforeEach(() => {
@@ -280,52 +293,46 @@ describe('Imgflo Core Client', () => {
         height: 100,
         source: 'test',
       };
-      client.registerStoreProvider(mockStoreProvider);
+      client.registerSaveProvider(mockSaveProvider);
     });
 
-    it('should upload an image', async () => {
-      const result = await client.upload({
-        blob: testBlob,
-        key: 'test/image.png',
-        provider: 'mock-store',
+    it('should save an image', async () => {
+      const result = await client.save(testBlob, {
+        path: 'test/image.png',
+        provider: 'mock-save',
       });
 
-      expect(result.url).toBe('https://example.com/test/image.png');
-      expect(result.key).toBe('test/image.png');
-      expect(result.provider).toBe('mock-store');
+      expect(result.location).toBe('https://example.com/test/image.png');
+      expect(result.provider).toBe('mock-save');
+      expect(result.size).toBe(testBlob.bytes.length);
+      expect(result.mime).toBe('image/png');
     });
 
     it('should use default provider when configured', async () => {
       const clientWithDefault = new Imgflo({
-        store: { default: 'mock-store' },
+        save: { default: 'mock-save' },
       });
-      clientWithDefault.registerStoreProvider(mockStoreProvider);
+      clientWithDefault.registerSaveProvider(mockSaveProvider);
 
-      const result = await clientWithDefault.upload({
-        blob: testBlob,
-        key: 'default-test.png',
-      });
+      const result = await clientWithDefault.save(testBlob, 'default-test.png');
 
-      expect(result.url).toBe('https://example.com/default-test.png');
+      expect(result.location).toBe('https://example.com/default-test.png');
     });
 
-    it('should throw error when no provider specified and no default', async () => {
+    it('should parse s3:// protocol and fail when provider not registered', async () => {
+      // Should fail with provider not found, but parsing should work
       await expect(
-        client.upload({
-          blob: testBlob,
-          key: 'test.png',
-        })
-      ).rejects.toThrow('No storage provider specified and no default configured');
+        client.save(testBlob, 's3://bucket/key.png')
+      ).rejects.toThrow('Provider "s3" not found for type "save"');
     });
 
     it('should throw error for unknown provider', async () => {
       await expect(
-        client.upload({
-          blob: testBlob,
-          key: 'test.png',
+        client.save(testBlob, {
+          path: 'test.png',
           provider: 'unknown',
         })
-      ).rejects.toThrow('Provider "unknown" not found for type "store"');
+      ).rejects.toThrow('Provider "unknown" not found for type "save"');
     });
   });
 
@@ -333,7 +340,7 @@ describe('Imgflo Core Client', () => {
     beforeEach(() => {
       client.registerGenerator(mockGenerator);
       client.registerTransformProvider(mockTransformProvider);
-      client.registerStoreProvider(mockStoreProvider);
+      client.registerSaveProvider(mockSaveProvider);
     });
 
     it('should run a simple generate pipeline', async () => {
@@ -357,11 +364,11 @@ describe('Imgflo Core Client', () => {
     it('should run a multi-step pipeline', async () => {
       const clientWithDefaults = new Imgflo({
         transform: { default: 'mock-transform' },
-        store: { default: 'mock-store' },
+        save: { default: 'mock-save' },
       });
       clientWithDefaults.registerGenerator(mockGenerator);
       clientWithDefaults.registerTransformProvider(mockTransformProvider);
-      clientWithDefaults.registerStoreProvider(mockStoreProvider);
+      clientWithDefaults.registerSaveProvider(mockSaveProvider);
 
       const results = await clientWithDefaults.run({
         name: 'multi-step',
@@ -380,9 +387,9 @@ describe('Imgflo Core Client', () => {
             out: 'resized',
           },
           {
-            kind: 'upload',
+            kind: 'save',
             in: 'resized',
-            key: 'output/image.png',
+            destination: 'output/image.png',
           },
         ],
       });
@@ -416,24 +423,24 @@ describe('Imgflo Core Client', () => {
       ).rejects.toThrow('Transform step references undefined or invalid variable: nonexistent');
     });
 
-    it('should throw error for invalid upload reference', async () => {
+    it('should throw error for invalid save reference', async () => {
       const clientWithDefaults = new Imgflo({
-        store: { default: 'mock-store' },
+        save: { default: 'mock-save' },
       });
-      clientWithDefaults.registerStoreProvider(mockStoreProvider);
+      clientWithDefaults.registerSaveProvider(mockSaveProvider);
 
       await expect(
         clientWithDefaults.run({
           name: 'invalid',
           steps: [
             {
-              kind: 'upload',
+              kind: 'save',
               in: 'nonexistent',
-              key: 'test.png',
+              destination: 'test.png',
             },
           ],
         })
-      ).rejects.toThrow('Upload step references undefined or invalid variable: nonexistent');
+      ).rejects.toThrow('Save step references undefined or invalid variable: nonexistent');
     });
   });
 });

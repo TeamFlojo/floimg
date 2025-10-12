@@ -1,6 +1,6 @@
 {
   "name": "imgflo-quickchart",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "QuickChart.io generator for imgflo - create charts using Chart.js",
   "type": "module",
   "main": "./dist/index.js",
@@ -40,7 +40,7 @@
     "directory": "packages/imgflo-quickchart"
   },
   "peerDependencies": {
-    "imgflo": "workspace:*"
+    "imgflo": "^0.1.0-alpha.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

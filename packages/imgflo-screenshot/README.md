@@ -37,7 +37,7 @@ const site = await imgflo.generate({
 });
 
 // Upload to S3
-const result = await imgflo.upload({ blob: site, key: 'screenshots/example.png' });
+const result = await imgflo.save(site, './output/example.png');
 console.log(result.url);
 ```
 

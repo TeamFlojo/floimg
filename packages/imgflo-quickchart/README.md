@@ -47,9 +47,9 @@ const chart = await imgflo.generate({
   }
 });
 
-// Convert to PNG and upload
+// Convert to PNG and save
 const png = await imgflo.transform({ blob: chart, op: 'convert', to: 'image/png' });
-const result = await imgflo.upload({ blob: png, key: 'charts/revenue.png' });
+const result = await imgflo.save(png, './output/revenue.png');
 
 console.log(result.url); // Use in slides, emails, etc.
 ```

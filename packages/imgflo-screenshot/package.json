@@ -1,6 +1,6 @@
 {
   "name": "imgflo-screenshot",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Screenshot generator for imgflo using Playwright headless browser",
   "type": "module",
   "main": "./dist/index.js",
@@ -41,14 +41,14 @@
     "directory": "packages/imgflo-screenshot"
   },
   "peerDependencies": {
-    "imgflo": "workspace:*"
+    "imgflo": "^0.1.0-alpha.1"
   },
   "dependencies": {
     "playwright": "^1.48.2"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "imgflo": "workspace:*",
+    "imgflo": "^0.1.0-alpha.1",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   },

@@ -42,7 +42,7 @@ const diagram = await imgflo.generate({
 });
 
 // Upload to S3
-const result = await imgflo.upload({ blob: diagram, key: 'diagrams/flow.svg' });
+const result = await imgflo.save(diagram, './output/flow.svg');
 console.log(result.url);
 ```
 

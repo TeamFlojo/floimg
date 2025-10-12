@@ -4,11 +4,11 @@ import createClient from "../../index.js";
 import { loadConfig, mergeCliArgs } from "../../config/loader.js";
 import type { MimeType } from "../../core/types.js";
 
-export const uploadCommand = new Command("upload")
-  .description("Upload an image to cloud storage")
+export const saveCommand = new Command("save")
+  .description("Save an image to filesystem or cloud storage")
   .requiredOption("--in <path>", "Input file path")
-  .requiredOption("--key <key>", "Storage key/path")
-  .option("--provider <name>", "Storage provider name (overrides config)")
+  .requiredOption("--out <destination>", "Output destination (file path, s3://bucket/key, etc.)")
+  .option("--provider <name>", "Storage provider name (overrides auto-detection)")
   .option("--bucket <name>", "S3 bucket name (overrides config)")
   .option("--region <region>", "S3 region (overrides config)")
   .option("--config <path>", "Path to config file")
@@ -41,22 +41,17 @@ export const uploadCommand = new Command("upload")
         mime,
       };
 
-      const result = await client.upload({
-        blob: inputBlob,
-        key: options.key,
-        provider: options.provider,
-      });
+      const result = await client.save(inputBlob, options.out);
 
-      console.log(`Image uploaded successfully!`);
-      console.log(`Key: ${result.key}`);
-      if (result.url) {
-        console.log(`URL: ${result.url}`);
-      }
-      if (result.etag) {
-        console.log(`ETag: ${result.etag}`);
+      console.log(`Image saved successfully!`);
+      console.log(`Provider: ${result.provider}`);
+      console.log(`Location: ${result.location}`);
+      console.log(`Size: ${result.size} bytes`);
+      if (result.metadata?.etag) {
+        console.log(`ETag: ${result.metadata.etag}`);
       }
     } catch (error) {
-      console.error("Error uploading image:", error instanceof Error ? error.message : error);
+      console.error("Error saving image:", error instanceof Error ? error.message : error);
       process.exit(1);
     }
   });

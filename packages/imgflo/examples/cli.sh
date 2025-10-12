@@ -18,10 +18,16 @@ imgflo transform \
   --out gradient.png
 
 echo ""
-echo "☁️  Upload to S3"
-imgflo upload \
+echo "💾 Save to filesystem"
+imgflo save \
   --in gradient.png \
-  --key examples/gradient.png
+  --out ./output/gradient.png
+
+echo ""
+echo "☁️  Or save to S3 using URI syntax"
+imgflo save \
+  --in gradient.png \
+  --out s3://my-bucket/examples/gradient.png
 
 echo ""
 echo "---"

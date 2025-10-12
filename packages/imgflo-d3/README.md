@@ -45,7 +45,7 @@ const chart = await imgflo.generate({
 });
 
 // Upload to S3
-await imgflo.upload({ blob: chart, key: 'charts/bar.svg' });
+await imgflo.save(chart, './output/bar.svg');
 ```
 
 ## Examples
@@ -422,7 +422,7 @@ setInterval(async () => {
       data: liveData
     }
   });
-  await imgflo.upload({ blob: chart, key: 'dashboard/live.svg' });
+  await imgflo.save(chart, './output/dashboard-live.svg');
 }, 60000);
 ```
 
