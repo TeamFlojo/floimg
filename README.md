@@ -73,14 +73,21 @@ Then just talk to Claude: *"Create a QR code for example.com"*
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
-| **@teamflojo/floimg** | Core (shapes, OpenAI) |
-| **@teamflojo/floimg-quickchart** | Chart.js charts |
-| **@teamflojo/floimg-d3** | D3 visualizations |
-| **@teamflojo/floimg-mermaid** | Diagrams |
-| **@teamflojo/floimg-qr** | QR codes |
-| **@teamflojo/floimg-screenshot** | Website screenshots |
+### Core
+
+| Package | Description | npm |
+|---------|-------------|-----|
+| [`@teamflojo/floimg`](https://www.npmjs.com/package/@teamflojo/floimg) | Core engine, CLI, MCP server | [![npm](https://img.shields.io/npm/v/@teamflojo/floimg.svg)](https://www.npmjs.com/package/@teamflojo/floimg) |
+
+### Plugins
+
+| Package | Description | npm |
+|---------|-------------|-----|
+| [`@teamflojo/floimg-quickchart`](https://www.npmjs.com/package/@teamflojo/floimg-quickchart) | Chart.js charts via QuickChart | [![npm](https://img.shields.io/npm/v/@teamflojo/floimg-quickchart.svg)](https://www.npmjs.com/package/@teamflojo/floimg-quickchart) |
+| [`@teamflojo/floimg-d3`](https://www.npmjs.com/package/@teamflojo/floimg-d3) | D3 data visualizations | [![npm](https://img.shields.io/npm/v/@teamflojo/floimg-d3.svg)](https://www.npmjs.com/package/@teamflojo/floimg-d3) |
+| [`@teamflojo/floimg-mermaid`](https://www.npmjs.com/package/@teamflojo/floimg-mermaid) | Mermaid diagrams | [![npm](https://img.shields.io/npm/v/@teamflojo/floimg-mermaid.svg)](https://www.npmjs.com/package/@teamflojo/floimg-mermaid) |
+| [`@teamflojo/floimg-qr`](https://www.npmjs.com/package/@teamflojo/floimg-qr) | QR code generation | [![npm](https://img.shields.io/npm/v/@teamflojo/floimg-qr.svg)](https://www.npmjs.com/package/@teamflojo/floimg-qr) |
+| [`@teamflojo/floimg-screenshot`](https://www.npmjs.com/package/@teamflojo/floimg-screenshot) | Website screenshots via Playwright | [![npm](https://img.shields.io/npm/v/@teamflojo/floimg-screenshot.svg)](https://www.npmjs.com/package/@teamflojo/floimg-screenshot) |
 
 ## Documentation
 

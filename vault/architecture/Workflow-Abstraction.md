@@ -1,12 +1,12 @@
 # Workflow Abstraction
 
-Technical deep-dive on imgflo's generate→transform→save abstraction.
+Technical deep-dive on floimg's generate→transform→save abstraction.
 
 ---
 
 ## The Three Primitives
 
-Every image workflow in imgflo consists of three operations:
+Every image workflow in floimg consists of three operations:
 
 ```
 generate(generator, params) → ImageBlob
@@ -37,7 +37,7 @@ Every workflow reduces to combinations of these three operations.
 Creates an image from structured parameters.
 
 ```typescript
-const blob = await imgflo.generate({
+const blob = await floimg.generate({
   generator: 'quickchart',  // Which generator to use
   params: {                 // Generator-specific params
     type: 'bar',
@@ -62,7 +62,7 @@ const blob = await imgflo.generate({
 Modifies an existing image.
 
 ```typescript
-const resized = await imgflo.transform({
+const resized = await floimg.transform({
   blob: chartBlob,          // Input image
   op: 'resize',             // Operation name
   params: { width: 800 }    // Operation-specific params
@@ -85,9 +85,9 @@ const resized = await imgflo.transform({
 Persists an image to storage.
 
 ```typescript
-const result = await imgflo.save(blob, 's3://my-bucket/chart.png');
+const result = await floimg.save(blob, 's3://my-bucket/chart.png');
 // or
-const result = await imgflo.save(blob, './output/chart.png');
+const result = await floimg.save(blob, './output/chart.png');
 ```
 
 **Destinations are auto-detected:**
@@ -127,10 +127,10 @@ interface ImageBlob {
 
 ## Session Workspace (MCP)
 
-When running as an MCP server, imgflo uses a session workspace to avoid passing image bytes between tool calls.
+When running as an MCP server, floimg uses a session workspace to avoid passing image bytes between tool calls.
 
 ```
-~/.imgflo/mcp-session/
+~/.floimg/mcp-session/
   ├── abc123.png    # Generated chart
   ├── def456.png    # Resized version
   └── ghi789.png    # With caption
@@ -147,7 +147,7 @@ When running as an MCP server, imgflo uses a session workspace to avoid passing 
 - MCP has token limits (~25K) — can't pass base64 images
 - Avoids encoding/decoding overhead
 - Enables efficient operation chaining
-- LLM just references IDs, imgflo handles data
+- LLM just references IDs, floimg handles data
 
 ---
 
@@ -158,7 +158,7 @@ Generators and transforms are plugins that extend the core abstraction.
 ### Generator Plugin Structure
 
 ```typescript
-import { createGenerator, GeneratorSchema } from 'imgflo';
+import { createGenerator, GeneratorSchema } from 'floimg';
 
 const schema: GeneratorSchema = {
   name: 'my-generator',
@@ -183,8 +183,8 @@ export default createGenerator(schema, async (params, ctx) => {
 Parameters are passed directly to underlying libraries:
 
 ```typescript
-// imgflo-quickchart passes params directly to Chart.js
-await imgflo.generate({
+// floimg-quickchart passes params directly to Chart.js
+await floimg.generate({
   generator: 'quickchart',
   params: {
     type: 'bar',           // Chart.js type
@@ -208,16 +208,16 @@ Operations compose naturally with async/await:
 
 ```typescript
 // Simple pipeline
-const chart = await imgflo.generate({ generator: 'quickchart', params: {...} });
-const resized = await imgflo.transform({ blob: chart, op: 'resize', params: { width: 800 } });
-await imgflo.save(resized, 's3://bucket/chart.png');
+const chart = await floimg.generate({ generator: 'quickchart', params: {...} });
+const resized = await floimg.transform({ blob: chart, op: 'resize', params: { width: 800 } });
+await floimg.save(resized, 's3://bucket/chart.png');
 
 // Multiple transforms
-let image = await imgflo.generate({...});
-image = await imgflo.transform({ blob: image, op: 'resize', params: {...} });
-image = await imgflo.transform({ blob: image, op: 'addCaption', params: {...} });
-image = await imgflo.transform({ blob: image, op: 'convert', params: { format: 'webp' } });
-await imgflo.save(image, './output.webp');
+let image = await floimg.generate({...});
+image = await floimg.transform({ blob: image, op: 'resize', params: {...} });
+image = await floimg.transform({ blob: image, op: 'addCaption', params: {...} });
+image = await floimg.transform({ blob: image, op: 'convert', params: { format: 'webp' } });
+await floimg.save(image, './output.webp');
 ```
 
 ### YAML Pipelines
@@ -253,7 +253,7 @@ Each operation can fail. Errors are typed and descriptive:
 
 ```typescript
 try {
-  await imgflo.generate({ generator: 'unknown', params: {} });
+  await floimg.generate({ generator: 'unknown', params: {} });
 } catch (error) {
   if (error instanceof GeneratorNotFoundError) {
     // Generator not registered
@@ -274,6 +274,6 @@ try {
 
 ## Related Documents
 
-- [[Why-imgflo-Exists]] — The problems this abstraction solves
+- [[Why-floimg-Exists]] — The problems this abstraction solves
 - [[Design-Principles]] — Philosophy behind these decisions
 - [[Plugin-Architecture]] — Creating custom generators and transforms

@@ -1,24 +1,24 @@
-# imgflo-d3
+# floimg-d3
 
-D3 data visualization generator for imgflo using server-side rendering.
+D3 data visualization generator for floimg using server-side rendering.
 
 ## Installation
 
 ```bash
-npm install imgflo imgflo-d3
+npm install floimg floimg-d3
 ```
 
 ## Usage
 
 ```typescript
-import createClient from 'imgflo';
-import d3viz from 'imgflo-d3';
+import createClient from 'floimg';
+import d3viz from 'floimg-d3';
 
-const imgflo = createClient();
-imgflo.registerGenerator(d3viz());
+const floimg = createClient();
+floimg.registerGenerator(d3viz());
 
 // Create a bar chart
-const chart = await imgflo.generate({
+const chart = await floimg.generate({
   generator: 'd3',
   params: {
     width: 600,
@@ -45,7 +45,7 @@ const chart = await imgflo.generate({
 });
 
 // Upload to S3
-await imgflo.save(chart, './output/bar.svg');
+await floimg.save(chart, './output/bar.svg');
 ```
 
 ## Examples
@@ -53,7 +53,7 @@ await imgflo.save(chart, './output/bar.svg');
 ### Bar Chart
 
 ```typescript
-const barChart = await imgflo.generate({
+const barChart = await floimg.generate({
   generator: 'd3',
   params: {
     width: 800,
@@ -104,7 +104,7 @@ const barChart = await imgflo.generate({
 ### Line Chart
 
 ```typescript
-const lineChart = await imgflo.generate({
+const lineChart = await floimg.generate({
   generator: 'd3',
   params: {
     width: 800,
@@ -158,7 +158,7 @@ const lineChart = await imgflo.generate({
 ### Pie Chart
 
 ```typescript
-const pieChart = await imgflo.generate({
+const pieChart = await floimg.generate({
   generator: 'd3',
   params: {
     width: 500,
@@ -207,7 +207,7 @@ const pieChart = await imgflo.generate({
 ### Scatter Plot
 
 ```typescript
-const scatterPlot = await imgflo.generate({
+const scatterPlot = await floimg.generate({
   generator: 'd3',
   params: {
     width: 600,
@@ -258,7 +258,7 @@ const scatterPlot = await imgflo.generate({
 ### Area Chart
 
 ```typescript
-const areaChart = await imgflo.generate({
+const areaChart = await floimg.generate({
   generator: 'd3',
   params: {
     width: 800,
@@ -312,7 +312,7 @@ const areaChart = await imgflo.generate({
 ### Heatmap
 
 ```typescript
-const heatmap = await imgflo.generate({
+const heatmap = await floimg.generate({
   generator: 'd3',
   params: {
     width: 600,
@@ -369,7 +369,7 @@ const heatmap = await imgflo.generate({
 ## Configuration
 
 ```typescript
-imgflo.registerGenerator(d3viz({
+floimg.registerGenerator(d3viz({
   width: 1000,           // Default width
   height: 600,           // Default height
   backgroundColor: '#f0f0f0'  // Default background
@@ -403,9 +403,9 @@ For full D3 capabilities and examples:
 ```typescript
 // Generate multiple charts for a report
 const charts = await Promise.all([
-  imgflo.generate({ generator: 'd3', params: salesChartConfig }),
-  imgflo.generate({ generator: 'd3', params: revenueChartConfig }),
-  imgflo.generate({ generator: 'd3', params: growthChartConfig })
+  floimg.generate({ generator: 'd3', params: salesChartConfig }),
+  floimg.generate({ generator: 'd3', params: revenueChartConfig }),
+  floimg.generate({ generator: 'd3', params: growthChartConfig })
 ]);
 ```
 
@@ -415,14 +415,14 @@ const charts = await Promise.all([
 // Update charts with live data
 setInterval(async () => {
   const liveData = await fetchLiveData();
-  const chart = await imgflo.generate({
+  const chart = await floimg.generate({
     generator: 'd3',
     params: {
       render: createChartRenderer(),
       data: liveData
     }
   });
-  await imgflo.save(chart, './output/dashboard-live.svg');
+  await floimg.save(chart, './output/dashboard-live.svg');
 }, 60000);
 ```
 
@@ -431,7 +431,7 @@ setInterval(async () => {
 ```typescript
 app.get('/api/chart/:type', async (req, res) => {
   const data = await fetchData(req.params.type);
-  const chart = await imgflo.generate({
+  const chart = await floimg.generate({
     generator: 'd3',
     params: { render: getRenderer(req.params.type), data }
   });
@@ -445,5 +445,5 @@ MIT
 
 ## See Also
 
-- [imgflo](https://github.com/bcooke/imgflo) - Core library
+- [floimg](https://github.com/bcooke/floimg) - Core library
 - [D3.js](https://d3js.org/) - Data visualization library

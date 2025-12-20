@@ -1,6 +1,6 @@
 # Task Classification
 
-How to classify work items in imgflo.
+How to classify work items in floimg.
 
 ## Work Item Types
 
@@ -56,7 +56,7 @@ For OSS visibility, link vault tasks to GitHub Issues:
 
 ## Examples
 
-**Task**: "Add WebP output support to imgflo-screenshot"
+**Task**: "Add WebP output support to floimg-screenshot"
 → T-2025-001-webp-output-support
 
 **Bug**: "QR code generator crashes with empty input"

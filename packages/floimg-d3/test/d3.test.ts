@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import d3viz from '../src/index.js';
 
-describe('imgflo-d3', () => {
+describe('floimg-d3', () => {
   it('should create a generator with default config', () => {
     const generator = d3viz();
     expect(generator.name).toBe('d3');

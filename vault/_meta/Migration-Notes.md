@@ -1,6 +1,6 @@
 # Migration Notes
 
-The vault structure is the canonical location for imgflo documentation.
+The vault structure is the canonical location for floimg documentation.
 
 ## Completed Migrations
 
@@ -8,14 +8,14 @@ The following files from the legacy `context/` folder have been processed:
 
 | Original File | Action | New Location |
 |--------------|--------|--------------|
-| `PROJECT_VISION.md` | **Deleted** | Core concepts migrated to `vault/Why-imgflo-Exists.md` and `vault/Design-Principles.md`. Business model content removed (not appropriate for OSS). |
+| `PROJECT_VISION.md` | **Deleted** | Core concepts migrated to `vault/Why-floimg-Exists.md` and `vault/Design-Principles.md`. Business model content removed (not appropriate for OSS). |
 | `PRODUCT_TECHNICAL_STRATEGY.md` | **Deleted** | Business/product strategy - not appropriate for OSS repo |
-| `imgflo-core-concept.md` | **Deleted** | Content migrated to `vault/Why-imgflo-Exists.md` |
+| `floimg-core-concept.md` | **Deleted** | Content migrated to `vault/Why-floimg-Exists.md` |
 | `monetization-ideas.md` | **Deleted** | Business model content - not appropriate for OSS repo |
 | `strategy-analysis.md` | **Deleted** | Business strategy - not appropriate for OSS repo |
 | `CURRENT_STATE_AND_NEXT_STEPS.md` | **Deleted** | Temporal/outdated session planning |
-| `imgflo-testing/imgflo-feedback.md` | **Migrated** | `vault/pm/_context/User-Feedback.md` |
-| `imgflo-testing/` (test files) | **Deleted** | Test artifacts |
+| `floimg-testing/floimg-feedback.md` | **Migrated** | `vault/pm/_context/User-Feedback.md` |
+| `floimg-testing/` (test files) | **Deleted** | Test artifacts |
 
 The following files from `docs/development/` have been migrated:
 
@@ -30,7 +30,7 @@ The vault now contains:
 
 ```
 vault/
-├── Why-imgflo-Exists.md         # Core problem/solution narrative
+├── Why-floimg-Exists.md         # Core problem/solution narrative
 ├── Design-Principles.md         # Philosophy and design decisions
 ├── Roadmap.md                   # Focus areas
 ├── _meta/

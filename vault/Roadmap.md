@@ -1,10 +1,10 @@
 # Roadmap
 
-High-level direction for imgflo development.
+High-level direction for floimg development.
 
 ## Vision
 
-imgflo is a universal image workflow engine designed for:
+floimg is a universal image workflow engine designed for:
 - Developers building image processing pipelines
 - AI agents that need image generation capabilities
 - Automation scripts and CI/CD workflows
@@ -19,10 +19,10 @@ imgflo is a universal image workflow engine designed for:
 - MCP server for AI agent integration
 
 ### Plugin Ecosystem
-- QR code generation (imgflo-qr)
-- Diagram rendering (imgflo-mermaid, imgflo-d3)
-- Chart generation (imgflo-quickchart)
-- Screenshots (imgflo-screenshot)
+- QR code generation (floimg-qr)
+- Diagram rendering (floimg-mermaid, floimg-d3)
+- Chart generation (floimg-quickchart)
+- Screenshots (floimg-screenshot)
 
 ## Focus Areas
 
@@ -49,7 +49,7 @@ imgflo is a universal image workflow engine designed for:
 ## Non-Goals
 
 These are explicitly out of scope:
-- Real-time image editing UI (see imgflo-studio)
+- Real-time image editing UI (see floimg-studio)
 - Photo editing features (filters, adjustments)
 - Video processing
 

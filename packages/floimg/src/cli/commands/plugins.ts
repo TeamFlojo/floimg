@@ -1,42 +1,42 @@
 import { Command } from "commander";
 
 export const pluginsCommand = new Command("plugins")
-  .description("Manage and view available imgflo plugins")
+  .description("Manage and view available floimg plugins")
   .action(async () => {
-    console.log("imgflo Plugins");
+    console.log("floimg Plugins");
     console.log("==============\n");
 
     // Try to load each known plugin
     const knownPlugins = [
       {
-        name: "imgflo-quickchart",
+        name: "floimg-quickchart",
         generator: "quickchart",
         description: "Chart.js charts (bar, line, pie, etc.)",
-        docs: "https://github.com/bcooke/imgflo/tree/main/packages/imgflo-quickchart",
+        docs: "https://github.com/bcooke/floimg/tree/main/packages/floimg-quickchart",
       },
       {
-        name: "imgflo-d3",
+        name: "floimg-d3",
         generator: "d3",
         description: "D3 data visualizations (custom charts, complex viz)",
-        docs: "https://github.com/bcooke/imgflo/tree/main/packages/imgflo-d3",
+        docs: "https://github.com/bcooke/floimg/tree/main/packages/floimg-d3",
       },
       {
-        name: "imgflo-mermaid",
+        name: "floimg-mermaid",
         generator: "mermaid",
         description: "Mermaid diagrams (flowcharts, sequence, gantt)",
-        docs: "https://github.com/bcooke/imgflo/tree/main/packages/imgflo-mermaid",
+        docs: "https://github.com/bcooke/floimg/tree/main/packages/floimg-mermaid",
       },
       {
-        name: "imgflo-qr",
+        name: "floimg-qr",
         generator: "qr",
         description: "QR code generation",
-        docs: "https://github.com/bcooke/imgflo/tree/main/packages/imgflo-qr",
+        docs: "https://github.com/bcooke/floimg/tree/main/packages/floimg-qr",
       },
       {
-        name: "imgflo-screenshot",
+        name: "floimg-screenshot",
         generator: "screenshot",
         description: "Website screenshots (Playwright)",
-        docs: "https://github.com/bcooke/imgflo/tree/main/packages/imgflo-screenshot",
+        docs: "https://github.com/bcooke/floimg/tree/main/packages/floimg-screenshot",
       },
     ];
 
@@ -64,9 +64,9 @@ export const pluginsCommand = new Command("plugins")
       console.log("\n💡 To install plugins:");
       console.log(`   npm install ${notInstalledPlugins.join(' ')}`);
       console.log("\n   Or install all at once:");
-      console.log("   npm install imgflo-quickchart imgflo-d3 imgflo-mermaid imgflo-qr imgflo-screenshot");
+      console.log("   npm install floimg-quickchart floimg-d3 floimg-mermaid floimg-qr floimg-screenshot");
     }
 
     console.log("\n📖 Documentation:");
-    console.log("   https://github.com/bcooke/imgflo");
+    console.log("   https://github.com/bcooke/floimg");
   });

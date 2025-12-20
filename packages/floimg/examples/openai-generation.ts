@@ -1,7 +1,7 @@
 /**
  * OpenAI DALL-E Image Generation Examples
  *
- * This example shows how to use imgflo with OpenAI's DALL-E models
+ * This example shows how to use floimg with OpenAI's DALL-E models
  * to generate AI-powered images.
  */
 
@@ -9,7 +9,7 @@ import createClient from "../src/index.js";
 
 async function main() {
   // Create client with OpenAI configuration
-  const imgflo = createClient({
+  const floimg = createClient({
     ai: {
       openai: {
         apiKey: process.env.OPENAI_API_KEY,
@@ -30,7 +30,7 @@ async function main() {
 
   // Example 1: Simple image generation
   console.log("1. Generating a presentation background...");
-  const bg = await imgflo.generate({
+  const bg = await floimg.generate({
     generator: "openai",
     params: {
       prompt:
@@ -45,7 +45,7 @@ async function main() {
 
   // Example 2: High quality image
   console.log("2. Generating HD quality image...");
-  const hdImage = await imgflo.generate({
+  const hdImage = await floimg.generate({
     generator: "openai",
     params: {
       prompt: "Professional office space, modern interior design, natural lighting",
@@ -58,7 +58,7 @@ async function main() {
 
   // Example 3: Generate and save
   console.log("3. Generating and saving to S3...");
-  const heroImage = await imgflo.generate({
+  const heroImage = await floimg.generate({
     generator: "openai",
     params: {
       prompt:
@@ -68,12 +68,12 @@ async function main() {
     },
   });
 
-  const saveResult = await imgflo.save(heroImage, "s3://bucket/examples/openai-hero.png");
+  const saveResult = await floimg.save(heroImage, "s3://bucket/examples/openai-hero.png");
   console.log(`Saved to: ${saveResult.location}\n`);
 
   // Example 4: Using DALL-E 2 (cheaper, faster)
   console.log("4. Using DALL-E 2 for quick generation...");
-  const dalle2Image = await imgflo.generate({
+  const dalle2Image = await floimg.generate({
     generator: "openai",
     params: {
       prompt: "Simple abstract pattern with circles and lines",
@@ -113,7 +113,7 @@ async function main() {
 
   console.log("5. Generating images for different use cases...");
   for (const useCase of useCases) {
-    const image = await imgflo.generate({
+    const image = await floimg.generate({
       generator: "openai",
       params: useCase.params as any,
     });

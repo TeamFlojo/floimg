@@ -1,6 +1,6 @@
 # Code Conventions
 
-Standards for code in the imgflo monorepo.
+Standards for code in the floimg monorepo.
 
 ## TypeScript
 
@@ -31,7 +31,7 @@ Standards for code in the imgflo monorepo.
 
 Each package follows:
 ```
-packages/imgflo-{name}/
+packages/floimg-{name}/
 ├── src/
 │   └── index.ts      # Main exports
 ├── dist/             # Built output (gitignored)
@@ -60,7 +60,7 @@ Use conventional commits:
 
 Example:
 ```
-feat(imgflo-qr): add custom color support
+feat(floimg-qr): add custom color support
 
 Allow users to specify foreground and background colors
 for generated QR codes.

@@ -1,7 +1,7 @@
 /**
  * Google Slides Workflow Example
  *
- * This demonstrates the exact use case that inspired imgflo:
+ * This demonstrates the exact use case that inspired floimg:
  * An AI agent (like Claude Code) can generate images for slides and
  * automatically upload them to get shareable URLs.
  */
@@ -9,7 +9,7 @@
 import createClient from "../src/index.js";
 
 async function createSlideImages() {
-  const imgflo = createClient({
+  const floimg = createClient({
     save: {
       default: "s3",
       s3: {
@@ -21,7 +21,7 @@ async function createSlideImages() {
 
   // Slide 1: Title slide background
   console.log("📊 Creating title slide background...");
-  const titleBg = await imgflo.generate({
+  const titleBg = await floimg.generate({
     generator: "shapes",
     params: {
       type: "gradient",
@@ -32,19 +32,19 @@ async function createSlideImages() {
     },
   });
 
-  const titleBgPng = await imgflo.transform({
+  const titleBgPng = await floimg.transform({
     blob: titleBg,
     op: "convert",
     to: "image/png",
   });
 
-  const titleBgResult = await imgflo.save(titleBgPng, "slides/title-background.png");
+  const titleBgResult = await floimg.save(titleBgPng, "slides/title-background.png");
 
   console.log(`✓ Title background: ${titleBgResult.location}`);
 
   // Slide 2: Content slide with pattern
   console.log("\n📊 Creating content slide background...");
-  const contentBg = await imgflo.generate({
+  const contentBg = await floimg.generate({
     generator: "shapes",
     params: {
       type: "pattern",
@@ -54,19 +54,19 @@ async function createSlideImages() {
     },
   });
 
-  const contentBgPng = await imgflo.transform({
+  const contentBgPng = await floimg.transform({
     blob: contentBg,
     op: "convert",
     to: "image/png",
   });
 
-  const contentBgResult = await imgflo.save(contentBgPng, "slides/content-background.png");
+  const contentBgResult = await floimg.save(contentBgPng, "slides/content-background.png");
 
   console.log(`✓ Content background: ${contentBgResult.location}`);
 
   // Slide 3: Accent graphic
   console.log("\n📊 Creating accent graphic...");
-  const accent = await imgflo.generate({
+  const accent = await floimg.generate({
     generator: "shapes",
     params: {
       type: "circle",
@@ -76,13 +76,13 @@ async function createSlideImages() {
     },
   });
 
-  const accentPng = await imgflo.transform({
+  const accentPng = await floimg.transform({
     blob: accent,
     op: "convert",
     to: "image/png",
   });
 
-  const accentResult = await imgflo.save(accentPng, "slides/accent-circle.png");
+  const accentResult = await floimg.save(accentPng, "slides/accent-circle.png");
 
   console.log(`✓ Accent graphic: ${accentResult.location}`);
 

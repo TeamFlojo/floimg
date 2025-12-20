@@ -74,7 +74,7 @@ export const quickchartSchema: GeneratorSchema = {
  * QuickChart generator - creates charts using Chart.js via QuickChart.io API
  *
  * This generator accepts Chart.js configuration directly (pass-through pattern).
- * No imgflo abstraction - you get full Chart.js capabilities.
+ * No floimg abstraction - you get full Chart.js capabilities.
  *
  * @see https://www.chartjs.org/docs/ - Chart.js documentation
  * @see https://quickchart.io/documentation/ - QuickChart API docs

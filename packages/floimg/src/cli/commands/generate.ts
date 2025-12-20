@@ -24,7 +24,7 @@ export const generateCommand = new Command("generate")
       if (options.out) {
         // Check if destination is cloud storage (s3://, r2://, etc.) or local file
         if (options.out.includes('://')) {
-          // Use imgflo's save provider (supports S3, etc.)
+          // Use floimg's save provider (supports S3, etc.)
           const result = await client.save(blob, options.out);
           console.log(`Generated image saved to cloud storage!`);
           console.log(`Provider: ${result.provider}`);

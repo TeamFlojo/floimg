@@ -1,12 +1,12 @@
 # LLM Integration
 
-How imgflo works with Large Language Models.
+How floimg works with Large Language Models.
 
 ## Division of Labor
 
-imgflo and LLMs complement each other:
+floimg and LLMs complement each other:
 
-| LLM's Job | imgflo's Job |
+| LLM's Job | floimg's Job |
 |-----------|-------------|
 | Parse natural language | Execute structured workflows |
 | Extract data from text | Handle image operations |
@@ -31,11 +31,11 @@ imgflo and LLMs complement each other:
    })
    ```
 
-**imgflo executes** and returns the final image URL.
+**floimg executes** and returns the final image URL.
 
 ## Workflow Abstraction
 
-imgflo provides consistent primitives:
+floimg provides consistent primitives:
 
 | User Request | Workflow | Output |
 |--------------|----------|--------|
@@ -45,23 +45,23 @@ imgflo provides consistent primitives:
 | *"Generate AI image"* | `generate(openai, {prompt})` | DALL-E image |
 | *"Screenshot site as PNG"* | `generate(screenshot) → transform(convert)` | PNG screenshot |
 
-## What imgflo Does NOT Do
+## What floimg Does NOT Do
 
-imgflo is intentionally limited:
+floimg is intentionally limited:
 
 - **Does NOT parse natural language** - That's the LLM's job
 - **Does NOT extract data** - LLM extracts chart data, colors, etc.
 - **Does NOT infer steps** - LLM decides what operations to run
 - **Does NOT guess parameters** - Explicit params only
 
-This separation keeps imgflo deterministic and predictable.
+This separation keeps floimg deterministic and predictable.
 
 ## MCP Integration
 
-The MCP server exposes imgflo to Claude Code:
+The MCP server exposes floimg to Claude Code:
 
 ```bash
-imgflo mcp install  # Generates config
+floimg mcp install  # Generates config
 ```
 
 Claude can then use natural language:
@@ -79,4 +79,4 @@ The MCP server routes to the appropriate generator automatically.
 
 - [[MCP-Server-Architecture]] - MCP implementation details
 - [[Workflow-Abstraction]] - The generate/transform/save primitives
-- [[Why-imgflo-Exists]] - Why deterministic execution matters
+- [[Why-floimg-Exists]] - Why deterministic execution matters

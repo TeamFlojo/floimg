@@ -51,7 +51,7 @@ import { JSDOM } from "jsdom";
  *
  * This generator accepts D3 code directly (pass-through pattern).
  * You provide a render function that uses D3 to create visualizations.
- * No imgflo abstraction - you get full D3 capabilities.
+ * No floimg abstraction - you get full D3 capabilities.
  *
  * @see https://d3js.org/ - D3 documentation
  *

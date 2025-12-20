@@ -1,6 +1,6 @@
 # Schema & Capability System
 
-How imgflo exposes generator and transform capabilities for discovery.
+How floimg exposes generator and transform capabilities for discovery.
 
 ---
 
@@ -84,9 +84,9 @@ interface ClientCapabilities {
 Query available capabilities from an initialized client:
 
 ```typescript
-import { createClient } from 'imgflo';
-import qr from 'imgflo-qr';
-import mermaid from 'imgflo-mermaid';
+import { createClient } from 'floimg';
+import qr from 'floimg-qr';
+import mermaid from 'floimg-mermaid';
 
 const client = createClient();
 client.registerGenerator(qr());
@@ -166,7 +166,7 @@ function validateParams(schema: GeneratorSchema, params: Record<string, unknown>
 Generators export a schema alongside the implementation:
 
 ```typescript
-import type { ImageGenerator, GeneratorSchema } from 'imgflo';
+import type { ImageGenerator, GeneratorSchema } from 'floimg';
 
 export const qrSchema: GeneratorSchema = {
   name: 'qr',
@@ -213,7 +213,7 @@ export default function qr(): ImageGenerator {
 Transform providers expose operation schemas:
 
 ```typescript
-import type { TransformProvider, TransformOperationSchema } from 'imgflo';
+import type { TransformProvider, TransformOperationSchema } from 'floimg';
 
 const resizeSchema: TransformOperationSchema = {
   name: 'resize',

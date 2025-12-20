@@ -1,19 +1,19 @@
 # Design Principles
 
-The philosophy driving imgflo's architecture and decisions.
+The philosophy driving floimg's architecture and decisions.
 
 ---
 
 ## 1. Glue, Not the Engine
 
-imgflo orchestrates existing libraries rather than reimplementing them.
+floimg orchestrates existing libraries rather than reimplementing them.
 
 - **QuickChart** renders charts (we don't rebuild Chart.js)
 - **Sharp** processes images (we don't rebuild ImageMagick)
 - **Playwright** takes screenshots (we don't rebuild a browser)
 - **OpenAI** generates AI images (we don't train models)
 
-**Why:** These tools are mature, well-tested, and actively maintained. imgflo's value is in the unified abstraction, not in recreating wheels.
+**Why:** These tools are mature, well-tested, and actively maintained. floimg's value is in the unified abstraction, not in recreating wheels.
 
 ---
 
@@ -22,8 +22,8 @@ imgflo orchestrates existing libraries rather than reimplementing them.
 Accept native library formats directly. Don't abstract away the underlying tool.
 
 ```typescript
-// imgflo passes Chart.js config directly to QuickChart
-await imgflo.generate({
+// floimg passes Chart.js config directly to QuickChart
+await floimg.generate({
   generator: 'quickchart',
   params: {
     type: 'bar',  // Chart.js type
@@ -37,7 +37,7 @@ await imgflo.generate({
 - Users can leverage existing Chart.js/Mermaid/D3 knowledge
 - Full library capabilities are available, not a neutered subset
 - Documentation from underlying libraries applies directly
-- No need to learn imgflo-specific abstractions for each generator
+- No need to learn floimg-specific abstractions for each generator
 
 ---
 
@@ -47,12 +47,12 @@ Install only what you need. The core package stays lean.
 
 ```bash
 # Minimal: just core (shapes + OpenAI)
-npm install imgflo
+npm install floimg
 
 # Add what you need
-npm install imgflo-quickchart   # +300KB for charts
-npm install imgflo-mermaid      # +2MB for diagrams
-npm install imgflo-screenshot   # +200MB for Playwright
+npm install floimg-quickchart   # +300KB for charts
+npm install floimg-mermaid      # +2MB for diagrams
+npm install floimg-screenshot   # +200MB for Playwright
 ```
 
 **Why:**
@@ -69,10 +69,10 @@ The same workflow works across all interfaces.
 
 | Interface | Same Workflow |
 |-----------|--------------|
-| JavaScript SDK | `imgflo.generate({...})` |
-| CLI | `imgflo generate --generator qr --params '{...}'` |
+| JavaScript SDK | `floimg.generate({...})` |
+| CLI | `floimg generate --generator qr --params '{...}'` |
 | YAML | `steps: [{ generate: {...} }]` |
-| MCP | `mcp__imgflo__generate({...})` |
+| MCP | `mcp__floimg__generate({...})` |
 
 **Why:**
 - Learn once, use everywhere
@@ -83,19 +83,19 @@ The same workflow works across all interfaces.
 
 ## 5. LLM-Ready, Not LLM-Dependent
 
-imgflo works great with LLMs via MCP, but doesn't require them.
+floimg works great with LLMs via MCP, but doesn't require them.
 
 **With LLM (via MCP):**
 > User: "Create a QR code for example.com"
-> Claude: *calls imgflo MCP tools automatically*
+> Claude: *calls floimg MCP tools automatically*
 
 **Without LLM (direct code):**
 ```typescript
-await imgflo.generate({ generator: 'qr', params: { text: 'example.com' } });
+await floimg.generate({ generator: 'qr', params: { text: 'example.com' } });
 ```
 
 **Why:**
-- Developers can use imgflo without AI infrastructure
+- Developers can use floimg without AI infrastructure
 - CI/CD pipelines don't need LLM calls
 - Deterministic workflows for production reliability
 - LLM integration is an option, not a requirement
@@ -104,15 +104,15 @@ await imgflo.generate({ generator: 'qr', params: { text: 'example.com' } });
 
 ## 6. Explicit Over Implicit
 
-imgflo doesn't guess. You specify what you want.
+floimg doesn't guess. You specify what you want.
 
-**What imgflo does NOT do:**
+**What floimg does NOT do:**
 - Infer image dimensions from context
 - Guess output formats
 - Assume default destinations
 - Parse natural language in parameters
 
-**What imgflo does:**
+**What floimg does:**
 - Execute exactly what you specify
 - Return predictable results
 - Fail fast with clear errors
@@ -122,7 +122,7 @@ imgflo doesn't guess. You specify what you want.
 - Reproducible outputs
 - Debuggable workflows
 - No "magic" that breaks unexpectedly
-- LLMs handle the ambiguity; imgflo handles the execution
+- LLMs handle the ambiguity; floimg handles the execution
 
 ---
 
@@ -131,10 +131,10 @@ imgflo doesn't guess. You specify what you want.
 Every operation produces an ImageBlob that can feed into the next.
 
 ```typescript
-const chart = await imgflo.generate({...});      // → ImageBlob
-const resized = await imgflo.transform(chart, {...}); // → ImageBlob
-const captioned = await imgflo.transform(resized, {...}); // → ImageBlob
-await imgflo.save(captioned, 's3://...');        // → SaveResult
+const chart = await floimg.generate({...});      // → ImageBlob
+const resized = await floimg.transform(chart, {...}); // → ImageBlob
+const captioned = await floimg.transform(resized, {...}); // → ImageBlob
+await floimg.save(captioned, 's3://...');        // → SaveResult
 ```
 
 **Why:**
@@ -151,7 +151,7 @@ Same inputs always produce the same outputs.
 
 ```typescript
 // This will always produce identical results
-await imgflo.generate({
+await floimg.generate({
   generator: 'qr',
   params: { text: 'hello', width: 300 }
 });
@@ -167,7 +167,7 @@ await imgflo.generate({
 
 ## 9. Open Source and Self-Hostable
 
-imgflo is MIT licensed, fully open source, and designed to run anywhere.
+floimg is MIT licensed, fully open source, and designed to run anywhere.
 
 **Core commitment:**
 - No vendor lock-in
@@ -188,11 +188,11 @@ imgflo is MIT licensed, fully open source, and designed to run anywhere.
 
 **Why:**
 - Developers can build products without ongoing costs
-- No surprise bills or rate limits from imgflo
+- No surprise bills or rate limits from floimg
 - Paid services (OpenAI, cloud storage) are opt-in and use your own credentials
 - Community can contribute, fork, and extend freely
 
-**The philosophy:** imgflo helps you build awesome products. If you want to use paid services like OpenAI or AWS S3, that's your choice with your keys. The core workflows—charts, diagrams, QR codes, image transforms—cost nothing to run.
+**The philosophy:** floimg helps you build awesome products. If you want to use paid services like OpenAI or AWS S3, that's your choice with your keys. The core workflows—charts, diagrams, QR codes, image transforms—cost nothing to run.
 
 ---
 
@@ -212,6 +212,6 @@ imgflo is MIT licensed, fully open source, and designed to run anywhere.
 
 ## Related Documents
 
-- [[Why-imgflo-Exists]] — The problems these principles solve
+- [[Why-floimg-Exists]] — The problems these principles solve
 - [[Workflow-Abstraction]] — Technical implementation of these principles
 - [[Plugin-Architecture]] — How the plugin system embodies opt-in complexity

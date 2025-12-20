@@ -1,5 +1,5 @@
 /**
- * Comprehensive example showing all imgflo plugins working together
+ * Comprehensive example showing all floimg plugins working together
  *
  * This demonstrates:
  * 1. Shapes (built-in)
@@ -11,14 +11,14 @@
  * Each generator uses pass-through pattern - native library formats with no abstraction.
  */
 
-import createClient from '../packages/imgflo/src/index.js';
-import quickchart from '../packages/imgflo-quickchart/src/index.js';
-import mermaid from '../packages/imgflo-mermaid/src/index.js';
-import screenshot from '../packages/imgflo-screenshot/src/index.js';
+import createClient from '../packages/floimg/src/index.js';
+import quickchart from '../packages/floimg-quickchart/src/index.js';
+import mermaid from '../packages/floimg-mermaid/src/index.js';
+import screenshot from '../packages/floimg-screenshot/src/index.js';
 
 async function main() {
   // Create client with filesystem storage for testing
-  const imgflo = createClient({
+  const floimg = createClient({
     verbose: true,
     store: {
       default: 'fs',
@@ -30,17 +30,17 @@ async function main() {
   });
 
   // Register all plugins
-  imgflo.registerGenerator(quickchart());
-  imgflo.registerGenerator(mermaid());
-  imgflo.registerGenerator(screenshot());
+  floimg.registerGenerator(quickchart());
+  floimg.registerGenerator(mermaid());
+  floimg.registerGenerator(screenshot());
 
-  console.log('🎨 imgflo - All Plugins Demo\n');
+  console.log('🎨 floimg - All Plugins Demo\n');
 
   // ====================================================================
   // 1. SHAPES (Built-in, zero dependencies)
   // ====================================================================
   console.log('1️⃣  Generating SVG gradient with built-in shapes generator...');
-  const gradient = await imgflo.generate({
+  const gradient = await floimg.generate({
     generator: 'shapes',
     params: {
       type: 'gradient',
@@ -51,13 +51,13 @@ async function main() {
     }
   });
 
-  const gradientPng = await imgflo.transform({
+  const gradientPng = await floimg.transform({
     blob: gradient,
     op: 'convert',
     to: 'image/png'
   });
 
-  await imgflo.upload({
+  await floimg.upload({
     blob: gradientPng,
     key: 'shapes-gradient.png'
   });
@@ -68,10 +68,10 @@ async function main() {
   // 2. QUICKCHART (Plugin, Chart.js pass-through)
   // ====================================================================
   console.log('2️⃣  Generating bar chart with QuickChart (Chart.js)...');
-  const barChart = await imgflo.generate({
+  const barChart = await floimg.generate({
     generator: 'quickchart',
     params: {
-      // Pure Chart.js configuration - no imgflo abstraction
+      // Pure Chart.js configuration - no floimg abstraction
       type: 'bar',
       data: {
         labels: ['Q1 2024', 'Q2 2024', 'Q3 2024', 'Q4 2024'],
@@ -99,7 +99,7 @@ async function main() {
     }
   });
 
-  await imgflo.upload({
+  await floimg.upload({
     blob: barChart,
     key: 'quickchart-revenue.png'
   });
@@ -110,7 +110,7 @@ async function main() {
   // 3. QUICKCHART - Line Chart
   // ====================================================================
   console.log('3️⃣  Generating line chart with QuickChart...');
-  const lineChart = await imgflo.generate({
+  const lineChart = await floimg.generate({
     generator: 'quickchart',
     params: {
       type: 'line',
@@ -134,7 +134,7 @@ async function main() {
     }
   });
 
-  await imgflo.upload({
+  await floimg.upload({
     blob: lineChart,
     key: 'quickchart-line.png'
   });
@@ -145,10 +145,10 @@ async function main() {
   // 4. MERMAID (Plugin, Mermaid syntax pass-through)
   // ====================================================================
   console.log('4️⃣  Generating flowchart with Mermaid...');
-  const flowchart = await imgflo.generate({
+  const flowchart = await floimg.generate({
     generator: 'mermaid',
     params: {
-      // Pure Mermaid syntax - no imgflo abstraction
+      // Pure Mermaid syntax - no floimg abstraction
       code: `
         graph TD
           A[User Request] --> B{Valid?}
@@ -163,7 +163,7 @@ async function main() {
     }
   });
 
-  await imgflo.upload({
+  await floimg.upload({
     blob: flowchart,
     key: 'mermaid-flow.svg'
   });
@@ -174,29 +174,29 @@ async function main() {
   // 5. MERMAID - Sequence Diagram
   // ====================================================================
   console.log('5️⃣  Generating sequence diagram with Mermaid...');
-  const sequence = await imgflo.generate({
+  const sequence = await floimg.generate({
     generator: 'mermaid',
     params: {
       code: `
         sequenceDiagram
           participant User
-          participant imgflo
+          participant floimg
           participant QuickChart
           participant S3
 
-          User->>imgflo: generate({ generator: 'quickchart', ... })
-          imgflo->>QuickChart: POST chart config
-          QuickChart-->>imgflo: PNG bytes
-          imgflo->>imgflo: transform to desired format
-          imgflo->>S3: upload(blob, key)
-          S3-->>imgflo: URL
-          imgflo-->>User: { url: 'https://...' }
+          User->>floimg: generate({ generator: 'quickchart', ... })
+          floimg->>QuickChart: POST chart config
+          QuickChart-->>floimg: PNG bytes
+          floimg->>floimg: transform to desired format
+          floimg->>S3: upload(blob, key)
+          S3-->>floimg: URL
+          floimg-->>User: { url: 'https://...' }
       `,
       theme: 'neutral'
     }
   });
 
-  await imgflo.upload({
+  await floimg.upload({
     blob: sequence,
     key: 'mermaid-sequence.svg'
   });
@@ -207,7 +207,7 @@ async function main() {
   // 6. SCREENSHOT (Plugin, HTML rendering)
   // ====================================================================
   console.log('6️⃣  Generating OG image with Screenshot (HTML)...');
-  const ogImage = await imgflo.generate({
+  const ogImage = await floimg.generate({
     generator: 'screenshot',
     params: {
       html: `
@@ -240,7 +240,7 @@ async function main() {
           </head>
           <body>
             <div>
-              <h1>imgflo</h1>
+              <h1>floimg</h1>
               <p>Image generation for AI agents</p>
             </div>
           </body>
@@ -251,7 +251,7 @@ async function main() {
     }
   });
 
-  await imgflo.upload({
+  await floimg.upload({
     blob: ogImage,
     key: 'screenshot-og.png'
   });
@@ -262,7 +262,7 @@ async function main() {
   // 7. SCREENSHOT - Website capture
   // ====================================================================
   console.log('7️⃣  Capturing website screenshot...');
-  const website = await imgflo.generate({
+  const website = await floimg.generate({
     generator: 'screenshot',
     params: {
       url: 'https://example.com',
@@ -272,7 +272,7 @@ async function main() {
     }
   });
 
-  await imgflo.upload({
+  await floimg.upload({
     blob: website,
     key: 'screenshot-example.png'
   });
@@ -294,7 +294,7 @@ async function main() {
   console.log('  • screenshot-example.png   - Website capture (Playwright)\n');
 
   console.log('🎯 Key Takeaway:');
-  console.log('   Each generator uses native library formats with ZERO imgflo abstraction.');
+  console.log('   Each generator uses native library formats with ZERO floimg abstraction.');
   console.log('   - QuickChart: Pure Chart.js config');
   console.log('   - Mermaid: Pure Mermaid syntax');
   console.log('   - Screenshot: Standard HTML/CSS');

@@ -12,22 +12,22 @@ mcpCommand
   .option("--global", "Install to global Claude Code config")
   .option("--output <path>", "Output path for MCP config snippet")
   .action(async (options) => {
-    console.log("imgflo MCP Setup");
+    console.log("floimg MCP Setup");
     console.log("================\n");
 
     // Get the path to the built MCP server
-    // When imgflo is installed globally, use require.resolve to find it
+    // When floimg is installed globally, use require.resolve to find it
     let serverPath: string;
     try {
-      serverPath = require.resolve("imgflo/dist/mcp/server.js");
+      serverPath = require.resolve("floimg/dist/mcp/server.js");
     } catch {
       // Fallback to local path if not found via require.resolve
-      serverPath = resolve(join(process.cwd(), "node_modules/imgflo/dist/mcp/server.js"));
+      serverPath = resolve(join(process.cwd(), "node_modules/floimg/dist/mcp/server.js"));
     }
 
     const mcpConfig = {
       mcpServers: {
-        imgflo: {
+        floimg: {
           command: "node",
           args: [serverPath],
           env: {
@@ -65,7 +65,7 @@ mcpCommand
     console.log("   4. Try: 'Create a QR code for https://example.com'");
 
     console.log("\n📖 Documentation:");
-    console.log("   https://github.com/bcooke/imgflo/blob/main/packages/imgflo/docs/guides/MCP_SERVER.md");
+    console.log("   https://github.com/bcooke/floimg/blob/main/packages/floimg/docs/guides/MCP_SERVER.md");
   });
 
 mcpCommand
@@ -73,7 +73,7 @@ mcpCommand
   .description("Test MCP server with inspector (opens browser)")
   .action(async () => {
     console.log("Starting MCP Inspector...\n");
-    console.log("This will open a web interface to test imgflo's MCP tools.");
+    console.log("This will open a web interface to test floimg's MCP tools.");
     console.log("Press Ctrl+C to stop.\n");
 
     const { spawn } = await import("child_process");
@@ -81,10 +81,10 @@ mcpCommand
     // Get the path to the built MCP server
     let serverPath: string;
     try {
-      serverPath = require.resolve("imgflo/dist/mcp/server.js");
+      serverPath = require.resolve("floimg/dist/mcp/server.js");
     } catch {
       // Fallback to local path if not found via require.resolve
-      serverPath = resolve(join(process.cwd(), "node_modules/imgflo/dist/mcp/server.js"));
+      serverPath = resolve(join(process.cwd(), "node_modules/floimg/dist/mcp/server.js"));
     }
 
     const inspector = spawn("npx", ["@modelcontextprotocol/inspector", "node", serverPath], {

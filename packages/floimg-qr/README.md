@@ -1,36 +1,36 @@
-# imgflo-qr
+# floimg-qr
 
-QR code generator for imgflo using the qrcode library.
+QR code generator for floimg using the qrcode library.
 
 ## Installation
 
 ```bash
-npm install imgflo imgflo-qr
+npm install floimg floimg-qr
 ```
 
 ## Usage
 
 ```typescript
-import createClient from 'imgflo';
-import qr from 'imgflo-qr';
+import createClient from 'floimg';
+import qr from 'floimg-qr';
 
-const imgflo = createClient();
-imgflo.registerGenerator(qr());
+const floimg = createClient();
+floimg.registerGenerator(qr());
 
 // Generate a QR code
-const qrCode = await imgflo.generate({
+const qrCode = await floimg.generate({
   generator: 'qr',
   params: {
-    text: 'https://github.com/bcooke/imgflo',
+    text: 'https://github.com/bcooke/floimg',
     width: 300,
     errorCorrectionLevel: 'H'
   }
 });
 
 // Save to filesystem or S3
-const result = await imgflo.save(qrCode, './output/qr-github.png');
+const result = await floimg.save(qrCode, './output/qr-github.png');
 // Or save to S3:
-// const result = await imgflo.save(qrCode, 's3://my-bucket/qr/github.png');
+// const result = await floimg.save(qrCode, 's3://my-bucket/qr/github.png');
 console.log(result.location);
 ```
 
@@ -39,7 +39,7 @@ console.log(result.location);
 ### Basic QR Code
 
 ```typescript
-const qr = await imgflo.generate({
+const qr = await floimg.generate({
   generator: 'qr',
   params: {
     text: 'Hello World!',
@@ -51,7 +51,7 @@ const qr = await imgflo.generate({
 ### URL QR Code
 
 ```typescript
-const qr = await imgflo.generate({
+const qr = await floimg.generate({
   generator: 'qr',
   params: {
     text: 'https://example.com',
@@ -64,7 +64,7 @@ const qr = await imgflo.generate({
 ### Custom Colors
 
 ```typescript
-const qr = await imgflo.generate({
+const qr = await floimg.generate({
   generator: 'qr',
   params: {
     text: 'Styled QR Code',
@@ -80,7 +80,7 @@ const qr = await imgflo.generate({
 ### SVG Output
 
 ```typescript
-const qr = await imgflo.generate({
+const qr = await floimg.generate({
   generator: 'qr',
   params: {
     text: 'https://example.com',
@@ -100,7 +100,7 @@ TEL:+1-555-1234
 EMAIL:john@example.com
 END:VCARD`;
 
-const qr = await imgflo.generate({
+const qr = await floimg.generate({
   generator: 'qr',
   params: {
     text: vcard,
@@ -115,7 +115,7 @@ const qr = await imgflo.generate({
 ```typescript
 const wifi = 'WIFI:T:WPA;S:MyNetwork;P:MyPassword;;';
 
-const qr = await imgflo.generate({
+const qr = await floimg.generate({
   generator: 'qr',
   params: {
     text: wifi,
@@ -150,7 +150,7 @@ Higher error correction allows QR codes to be read even if partially damaged, bu
 ## Configuration
 
 ```typescript
-imgflo.registerGenerator(qr({
+floimg.registerGenerator(qr({
   errorCorrectionLevel: 'H',  // Default to high error correction
   width: 400,                  // Default width
   margin: 5,                   // Default margin
@@ -172,7 +172,7 @@ const ticketData = JSON.stringify({
   code: 'ABC123'
 });
 
-const ticket = await imgflo.generate({
+const ticket = await floimg.generate({
   generator: 'qr',
   params: {
     text: ticketData,
@@ -187,7 +187,7 @@ const ticket = await imgflo.generate({
 ```typescript
 const paymentUrl = 'bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa?amount=0.01';
 
-const payment = await imgflo.generate({
+const payment = await floimg.generate({
   generator: 'qr',
   params: {
     text: paymentUrl,
@@ -202,7 +202,7 @@ const payment = await imgflo.generate({
 ```typescript
 const appStore = 'https://apps.apple.com/app/id123456789';
 
-const qr = await imgflo.generate({
+const qr = await floimg.generate({
   generator: 'qr',
   params: {
     text: appStore,
@@ -236,5 +236,5 @@ MIT
 
 ## See Also
 
-- [imgflo](https://github.com/bcooke/imgflo) - Core library
+- [floimg](https://github.com/bcooke/floimg) - Core library
 - [qrcode](https://github.com/soldair/node-qrcode) - QR code library

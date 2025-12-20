@@ -1,5 +1,5 @@
 #!/bin/bash
-# Pre-commit hook for imgflo (OSS)
+# Pre-commit hook for floimg (OSS)
 # Validates code quality before commits
 
 set -e

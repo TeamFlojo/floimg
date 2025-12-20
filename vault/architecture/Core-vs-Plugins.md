@@ -2,17 +2,17 @@
 
 ## Overview
 
-imgflo uses a plugin architecture to keep the core lightweight while enabling specialized functionality. This document explains when to add features to core vs creating a new plugin.
+floimg uses a plugin architecture to keep the core lightweight while enabling specialized functionality. This document explains when to add features to core vs creating a new plugin.
 
 ## The Principle
 
-**Core Package (`imgflo`):**
+**Core Package (`floimg`):**
 - Fundamental image operations that apply to most use cases
 - Features using dependencies we already require
 - Zero or minimal new dependencies (< 5MB total)
 - Operations that work on any image
 
-**Plugin Packages (`imgflo-*`):**
+**Plugin Packages (`floimg-*`):**
 - Specialized image generation (charts, diagrams, QR codes)
 - Heavy external dependencies (> 5MB or requires downloads)
 - Domain-specific functionality (screenshot browsers, AI services)
@@ -30,12 +30,12 @@ Example: Filters use Sharp, which is already required for basic operations like 
 
 ```typescript
 // Sharp is already in core for these operations:
-await imgflo.transform({ blob, op: 'convert', to: 'image/png' });
-await imgflo.transform({ blob, op: 'resize', params: { width: 800 } });
+await floimg.transform({ blob, op: 'convert', to: 'image/png' });
+await floimg.transform({ blob, op: 'resize', params: { width: 800 } });
 
 // So it makes sense to expose more Sharp capabilities:
-await imgflo.transform({ blob, op: 'blur', params: { sigma: 5 } });
-await imgflo.transform({ blob, op: 'grayscale' });
+await floimg.transform({ blob, op: 'blur', params: { sigma: 5 } });
+await floimg.transform({ blob, op: 'grayscale' });
 ```
 
 **If NO -> Consider PLUGIN**
@@ -44,7 +44,7 @@ Example: Screenshot requires Playwright (~200MB browser download).
 
 ```typescript
 // This needs a whole new dependency stack:
-import screenshot from 'imgflo-screenshot'; // Brings Playwright + Chromium
+import screenshot from 'floimg-screenshot'; // Brings Playwright + Chromium
 ```
 
 ### 2. Is it a fundamental image operation?
@@ -77,7 +77,7 @@ If most users need it for basic image workflows, it can be in core.
 
 Specialized needs should be opt-in.
 
-## Examples from imgflo
+## Examples from floimg
 
 ### Core Package Features
 
@@ -103,19 +103,19 @@ Specialized needs should be opt-in.
 ### Plugin Features
 
 **Heavy Dependencies:**
-- `imgflo-screenshot` - Playwright + Chromium (~200MB)
-- `imgflo-mermaid` - Mermaid + Puppeteer (~200MB)
+- `floimg-screenshot` - Playwright + Chromium (~200MB)
+- `floimg-mermaid` - Mermaid + Puppeteer (~200MB)
 
 **Specialized Generation:**
-- `imgflo-qr` - QR code generation library
-- `imgflo-quickchart` - Chart.js integration
-- `imgflo-d3` - D3 data visualizations
+- `floimg-qr` - QR code generation library
+- `floimg-quickchart` - Chart.js integration
+- `floimg-d3` - D3 data visualizations
 
 **Why plugins?**
 - Most users don't need QR codes, charts, or screenshots
 - Heavy downloads should be opt-in
 - Specialized use cases
-- Keeps `npm install imgflo` fast and lightweight
+- Keeps `npm install floimg` fast and lightweight
 
 ## Real-World Scenarios
 
@@ -129,7 +129,7 @@ Specialized needs should be opt-in.
 - Small dependency? Yes, no new deps
 - Most users need it? No, < 10% of users
 
-**Decision:** Could be core (no new deps) BUT it's very specialized. Consider a plugin (`imgflo-hdr`) or add as an opt-in operation in core with clear documentation.
+**Decision:** Could be core (no new deps) BUT it's very specialized. Consider a plugin (`floimg-hdr`) or add as an opt-in operation in core with clear documentation.
 
 ### Scenario 2: Adding Background Removal
 
@@ -141,7 +141,7 @@ Specialized needs should be opt-in.
 - Small dependency? No, AI models are ~50-100MB
 - Most users need it? No, < 20% of users
 
-**Decision:** PLUGIN (`imgflo-background-removal`)
+**Decision:** PLUGIN (`floimg-background-removal`)
 - Large dependency
 - Specialized AI feature
 - Not needed for basic workflows
@@ -176,7 +176,7 @@ When proposing a new feature:
 3. **Consider the user:**
    - What percentage need this feature?
    - Is it part of basic image workflows?
-   - Would they expect it to "just work" after `npm install imgflo`?
+   - Would they expect it to "just work" after `npm install floimg`?
 
 4. **Document your reasoning:**
    - Explain why core vs plugin in your PR
@@ -185,29 +185,29 @@ When proposing a new feature:
 
 ## The Zero-Config Principle
 
-imgflo aims for **zero-config for common workflows**:
+floimg aims for **zero-config for common workflows**:
 
 ```typescript
-// This should work with just: npm install imgflo
-const imgflo = createClient();
+// This should work with just: npm install floimg
+const floimg = createClient();
 
 // Basic generation
-const image = await imgflo.generate({ generator: 'shapes', params: {...} });
+const image = await floimg.generate({ generator: 'shapes', params: {...} });
 
 // Basic transforms
-const resized = await imgflo.transform({ blob: image, op: 'resize', params: { width: 800 } });
-const blurred = await imgflo.transform({ blob: resized, op: 'blur', params: { sigma: 5 } });
+const resized = await floimg.transform({ blob: image, op: 'resize', params: { width: 800 } });
+const blurred = await floimg.transform({ blob: resized, op: 'blur', params: { sigma: 5 } });
 
 // Basic save
-await imgflo.save(blurred, './output.png');
+await floimg.save(blurred, './output.png');
 ```
 
 If a feature is needed for this basic workflow, it should be in core. If it's specialized:
 
 ```typescript
-// This requires: npm install imgflo imgflo-screenshot
-import screenshot from 'imgflo-screenshot';
-imgflo.registerGenerator(screenshot());
+// This requires: npm install floimg floimg-screenshot
+import screenshot from 'floimg-screenshot';
+floimg.registerGenerator(screenshot());
 ```
 
 ## Summary
@@ -231,7 +231,7 @@ If you're unsure whether a feature should be core or a plugin:
 3. Explain your reasoning
 4. We'll discuss as a team
 
-The goal is to keep imgflo's core powerful yet lightweight, with plugins for specialized needs.
+The goal is to keep floimg's core powerful yet lightweight, with plugins for specialized needs.
 
 ---
 

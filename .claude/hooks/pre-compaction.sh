@@ -1,5 +1,5 @@
 #!/bin/bash
-# Pre-compaction hook for imgflo
+# Pre-compaction hook for floimg
 # Saves context before memory compaction
 
 echo "Context compaction detected. Important context may be lost."

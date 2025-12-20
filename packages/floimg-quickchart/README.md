@@ -1,20 +1,20 @@
-# imgflo-quickchart
+# floimg-quickchart
 
-QuickChart.io generator for imgflo - create charts using Chart.js configuration.
+QuickChart.io generator for floimg - create charts using Chart.js configuration.
 
 ## Installation
 
 ```bash
-npm install imgflo imgflo-quickchart
+npm install floimg floimg-quickchart
 ```
 
 ## Usage
 
 ```typescript
-import createClient from 'imgflo';
-import quickchart from 'imgflo-quickchart';
+import createClient from 'floimg';
+import quickchart from 'floimg-quickchart';
 
-const imgflo = createClient({
+const floimg = createClient({
   store: {
     default: 's3',
     s3: { region: 'us-east-1', bucket: 'my-charts' }
@@ -22,10 +22,10 @@ const imgflo = createClient({
 });
 
 // Register the QuickChart generator
-imgflo.registerGenerator(quickchart());
+floimg.registerGenerator(quickchart());
 
 // Generate a bar chart
-const chart = await imgflo.generate({
+const chart = await floimg.generate({
   generator: 'quickchart',
   params: {
     type: 'bar',
@@ -48,8 +48,8 @@ const chart = await imgflo.generate({
 });
 
 // Convert to PNG and save
-const png = await imgflo.transform({ blob: chart, op: 'convert', to: 'image/png' });
-const result = await imgflo.save(png, './output/revenue.png');
+const png = await floimg.transform({ blob: chart, op: 'convert', to: 'image/png' });
+const result = await floimg.save(png, './output/revenue.png');
 
 console.log(result.url); // Use in slides, emails, etc.
 ```
@@ -61,7 +61,7 @@ QuickChart supports all Chart.js chart types:
 ### Bar Chart
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'quickchart',
   params: {
     type: 'bar',
@@ -76,7 +76,7 @@ await imgflo.generate({
 ### Line Chart
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'quickchart',
   params: {
     type: 'line',
@@ -96,7 +96,7 @@ await imgflo.generate({
 ### Pie Chart
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'quickchart',
   params: {
     type: 'pie',
@@ -114,7 +114,7 @@ await imgflo.generate({
 ### Doughnut Chart
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'quickchart',
   params: {
     type: 'doughnut',
@@ -131,7 +131,7 @@ await imgflo.generate({
 ### Generator Options
 
 ```typescript
-imgflo.registerGenerator(quickchart({
+floimg.registerGenerator(quickchart({
   width: 800,              // Default width
   height: 600,             // Default height
   backgroundColor: 'white', // Default background
@@ -143,7 +143,7 @@ imgflo.registerGenerator(quickchart({
 ### Per-Chart Overrides
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'quickchart',
   params: {
     width: 1200,           // Override width
@@ -169,7 +169,7 @@ Since this generator uses Chart.js format directly, refer to the official Chart.
 ### Multi-Dataset Chart
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'quickchart',
   params: {
     type: 'line',
@@ -203,7 +203,7 @@ await imgflo.generate({
 ### Stacked Bar Chart
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'quickchart',
   params: {
     type: 'bar',
@@ -234,6 +234,6 @@ MIT
 
 ## See Also
 
-- [imgflo](https://github.com/bcooke/imgflo) - Core library
+- [floimg](https://github.com/bcooke/floimg) - Core library
 - [QuickChart.io](https://quickchart.io) - Chart rendering service
 - [Chart.js](https://www.chartjs.org) - Charting library

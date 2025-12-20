@@ -1,11 +1,11 @@
-# imgflo-screenshot
+# floimg-screenshot
 
-Screenshot generator for imgflo using Playwright headless browser.
+Screenshot generator for floimg using Playwright headless browser.
 
 ## Installation
 
 ```bash
-npm install imgflo imgflo-screenshot
+npm install floimg floimg-screenshot
 ```
 
 This will automatically install Playwright and download Chromium (~200MB).
@@ -13,10 +13,10 @@ This will automatically install Playwright and download Chromium (~200MB).
 ## Usage
 
 ```typescript
-import createClient from 'imgflo';
-import screenshot from 'imgflo-screenshot';
+import createClient from 'floimg';
+import screenshot from 'floimg-screenshot';
 
-const imgflo = createClient({
+const floimg = createClient({
   store: {
     default: 's3',
     s3: { region: 'us-east-1', bucket: 'my-screenshots' }
@@ -24,10 +24,10 @@ const imgflo = createClient({
 });
 
 // Register the screenshot generator
-imgflo.registerGenerator(screenshot());
+floimg.registerGenerator(screenshot());
 
 // Screenshot a website
-const site = await imgflo.generate({
+const site = await floimg.generate({
   generator: 'screenshot',
   params: {
     url: 'https://example.com',
@@ -37,7 +37,7 @@ const site = await imgflo.generate({
 });
 
 // Upload to S3
-const result = await imgflo.save(site, './output/example.png');
+const result = await floimg.save(site, './output/example.png');
 console.log(result.url);
 ```
 
@@ -46,10 +46,10 @@ console.log(result.url);
 ### 1. Website Screenshots
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'screenshot',
   params: {
-    url: 'https://github.com/bcooke/imgflo',
+    url: 'https://github.com/bcooke/floimg',
     width: 1280,
     height: 800,
     fullPage: true  // Capture entire page
@@ -62,7 +62,7 @@ await imgflo.generate({
 Perfect for generating images from HTML/CSS:
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'screenshot',
   params: {
     html: `
@@ -82,7 +82,7 @@ await imgflo.generate({
 Capture specific elements:
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'screenshot',
   params: {
     url: 'https://example.com',
@@ -98,7 +98,7 @@ await imgflo.generate({
 Wait for dynamic content to load:
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'screenshot',
   params: {
     url: 'https://example.com/dashboard',
@@ -111,7 +111,7 @@ await imgflo.generate({
 ### 5. High DPI / Retina Screenshots
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'screenshot',
   params: {
     url: 'https://example.com',
@@ -127,7 +127,7 @@ await imgflo.generate({
 ### Generator Options
 
 ```typescript
-imgflo.registerGenerator(screenshot({
+floimg.registerGenerator(screenshot({
   persistent: true,        // Reuse browser instance (faster)
   defaultWidth: 1920,
   defaultHeight: 1080,
@@ -144,12 +144,12 @@ For better performance when taking multiple screenshots:
 
 ```typescript
 const screenshotGen = screenshot({ persistent: true });
-imgflo.registerGenerator(screenshotGen);
+floimg.registerGenerator(screenshotGen);
 
 // Take multiple screenshots - browser stays open
-await imgflo.generate({ generator: 'screenshot', params: { url: 'https://site1.com' } });
-await imgflo.generate({ generator: 'screenshot', params: { url: 'https://site2.com' } });
-await imgflo.generate({ generator: 'screenshot', params: { url: 'https://site3.com' } });
+await floimg.generate({ generator: 'screenshot', params: { url: 'https://site1.com' } });
+await floimg.generate({ generator: 'screenshot', params: { url: 'https://site2.com' } });
+await floimg.generate({ generator: 'screenshot', params: { url: 'https://site3.com' } });
 
 // Browser closes when process exits
 ```
@@ -177,7 +177,7 @@ await imgflo.generate({ generator: 'screenshot', params: { url: 'https://site3.c
 Generate OG images from HTML:
 
 ```typescript
-const ogImage = await imgflo.generate({
+const ogImage = await floimg.generate({
   generator: 'screenshot',
   params: {
     html: `
@@ -219,7 +219,7 @@ const ogImage = await imgflo.generate({
 Capture a live dashboard:
 
 ```typescript
-const dashboard = await imgflo.generate({
+const dashboard = await floimg.generate({
   generator: 'screenshot',
   params: {
     url: 'https://internal-dashboard.company.com',
@@ -234,7 +234,7 @@ const dashboard = await imgflo.generate({
 ### Mobile Viewport
 
 ```typescript
-const mobile = await imgflo.generate({
+const mobile = await floimg.generate({
   generator: 'screenshot',
   params: {
     url: 'https://example.com',
@@ -275,7 +275,7 @@ npx playwright install-deps chromium
 Increase timeout for slow-loading pages:
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'screenshot',
   params: {
     url: 'https://slow-site.com',
@@ -289,7 +289,7 @@ await imgflo.generate({
 Ensure selector exists:
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'screenshot',
   params: {
     url: 'https://example.com',
@@ -312,5 +312,5 @@ MIT
 
 ## See Also
 
-- [imgflo](https://github.com/bcooke/imgflo) - Core library
+- [floimg](https://github.com/bcooke/floimg) - Core library
 - [Playwright](https://playwright.dev) - Browser automation

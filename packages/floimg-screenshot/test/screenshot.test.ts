@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import screenshot from '../src/index.js';
 
-describe('imgflo-screenshot', () => {
+describe('floimg-screenshot', () => {
   it('should create a generator with default config', () => {
     const generator = screenshot();
     expect(generator.name).toBe('screenshot');

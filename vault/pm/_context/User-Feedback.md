@@ -1,6 +1,6 @@
 # User Feedback & Improvement Ideas
 
-Collected feedback from real-world usage of imgflo.
+Collected feedback from real-world usage of floimg.
 
 ---
 
@@ -9,8 +9,8 @@ Collected feedback from real-world usage of imgflo.
 ### Export Naming
 The library exports `createClient` as both default and named export, which works well:
 ```typescript
-import createClient from 'imgflo';     // Default export
-import { createClient } from 'imgflo'; // Named export
+import createClient from 'floimg';     // Default export
+import { createClient } from 'floimg'; // Named export
 ```
 
 **Recommendation:** Maintain both exports for flexibility.
@@ -138,8 +138,8 @@ interface S3ProviderConfig {
 For APIs like Google Slides that accept data URIs:
 
 ```typescript
-const result = await imgflo.generate({ ... })
-const dataUri = await imgflo.toDataUri(result);
+const result = await floimg.generate({ ... })
+const dataUri = await floimg.toDataUri(result);
 // Returns: "data:image/png;base64,..."
 ```
 
@@ -153,7 +153,7 @@ const dataUri = await imgflo.toDataUri(result);
 Add common dimension presets:
 
 ```typescript
-const result = await imgflo.generate({
+const result = await floimg.generate({
   generator: 'shapes',
   params: { ... },
   preset: 'slides-widescreen' // 1920x1080
@@ -165,7 +165,7 @@ const result = await imgflo.generate({
 Generate multiple variations:
 
 ```typescript
-const variations = await imgflo.batch([
+const variations = await floimg.batch([
   { generator: 'shapes', params: { colors: ['#667eea', '#764ba2'] } },
   { generator: 'shapes', params: { colors: ['#FF6B6B', '#4ECDC4'] } },
   { generator: 'shapes', params: { colors: ['#9333ea', '#db2777'] } }

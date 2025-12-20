@@ -66,7 +66,7 @@ export const qrSchema: GeneratorSchema = {
  * QR code generator using the qrcode library
  *
  * This generator accepts qrcode library options directly (pass-through pattern).
- * No imgflo abstraction - you get full qrcode library capabilities.
+ * No floimg abstraction - you get full qrcode library capabilities.
  *
  * @see https://github.com/soldair/node-qrcode - qrcode library documentation
  *

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import quickchart from '../src/index.js';
 
-describe('imgflo-quickchart', () => {
+describe('floimg-quickchart', () => {
   it('should create a generator with default config', () => {
     const generator = quickchart();
     expect(generator.name).toBe('quickchart');

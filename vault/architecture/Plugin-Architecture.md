@@ -1,13 +1,13 @@
 # Plugin Architecture
 
-How the imgflo plugin system works.
+How the floimg plugin system works.
 
 ## Overview
 
-imgflo uses a plugin-based architecture where functionality is split across focused packages:
+floimg uses a plugin-based architecture where functionality is split across focused packages:
 
-- **imgflo** (core) - Base library, CLI, MCP server
-- **imgflo-{name}** (plugins) - Specialized generators/transforms
+- **floimg** (core) - Base library, CLI, MCP server
+- **floimg-{name}** (plugins) - Specialized generators/transforms
 
 ## Plugin Types
 
@@ -15,7 +15,7 @@ imgflo uses a plugin-based architecture where functionality is split across focu
 Create images from parameters (no input image required).
 
 ```typescript
-import { createGenerator, GeneratorSchema } from 'imgflo';
+import { createGenerator, GeneratorSchema } from 'floimg';
 
 const schema: GeneratorSchema = {
   name: 'my-generator',
@@ -38,7 +38,7 @@ export const myGenerator = createGenerator(schema, async (params, ctx) => {
 Modify existing images.
 
 ```typescript
-import { createTransform, TransformSchema } from 'imgflo';
+import { createTransform, TransformSchema } from 'floimg';
 
 const schema: TransformSchema = {
   name: 'my-transform',
@@ -58,14 +58,14 @@ export const myTransform = createTransform(schema, async (input, params, ctx) =>
 
 ## Plugin Registration
 
-Plugins are registered with the imgflo runtime:
+Plugins are registered with the floimg runtime:
 
 ```typescript
-import { Imgflo } from 'imgflo';
-import { qrGenerator } from 'imgflo-qr';
-import { mermaidGenerator } from 'imgflo-mermaid';
+import { Imgflo } from 'floimg';
+import { qrGenerator } from 'floimg-qr';
+import { mermaidGenerator } from 'floimg-mermaid';
 
-const imgflo = new Imgflo({
+const floimg = new Imgflo({
   generators: [qrGenerator, mermaidGenerator],
   transforms: [],
 });
@@ -76,10 +76,10 @@ const imgflo = new Imgflo({
 Each plugin package follows:
 
 ```
-packages/imgflo-{name}/
+packages/floimg-{name}/
 ├── src/
 │   └── index.ts      # Exports generators/transforms
-├── package.json      # Peer dep on imgflo
+├── package.json      # Peer dep on floimg
 ├── tsconfig.json
 ├── README.md
 └── vitest.config.ts
@@ -87,19 +87,19 @@ packages/imgflo-{name}/
 
 ## Dependencies
 
-- Plugins declare `imgflo` as a **peer dependency**
-- This allows users to control which imgflo version they use
+- Plugins declare `floimg` as a **peer dependency**
+- This allows users to control which floimg version they use
 - Plugin functionality is self-contained
 
 ## Current Plugins
 
 | Package | Type | Description |
 |---------|------|-------------|
-| imgflo-qr | Generator | QR code generation |
-| imgflo-mermaid | Generator | Mermaid diagram rendering |
-| imgflo-d3 | Generator | D3 visualizations |
-| imgflo-quickchart | Generator | Chart generation via QuickChart |
-| imgflo-screenshot | Generator | Web page screenshots via Playwright |
+| floimg-qr | Generator | QR code generation |
+| floimg-mermaid | Generator | Mermaid diagram rendering |
+| floimg-d3 | Generator | D3 visualizations |
+| floimg-quickchart | Generator | Chart generation via QuickChart |
+| floimg-screenshot | Generator | Web page screenshots via Playwright |
 
 ## Creating New Plugins
 

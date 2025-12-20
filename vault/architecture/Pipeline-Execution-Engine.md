@@ -1,6 +1,6 @@
 # Pipeline Execution Engine
 
-How imgflo analyzes dependencies and executes pipeline steps in parallel.
+How floimg analyzes dependencies and executes pipeline steps in parallel.
 
 ---
 

@@ -1,6 +1,6 @@
-# Why imgflo Exists
+# Why floimg Exists
 
-imgflo exists to solve two fundamental problems that developers face when working with images in modern applications.
+floimg exists to solve two fundamental problems that developers face when working with images in modern applications.
 
 ## The Two Problems
 
@@ -48,7 +48,7 @@ Each library has:
 - **Different error handling** — each has its own error types
 - **No composability** — you can't easily chain Chart.js → Sharp → S3
 
-**Example: A "simple" workflow without imgflo:**
+**Example: A "simple" workflow without floimg:**
 
 ```typescript
 // Generate a chart with Chart.js
@@ -81,7 +81,7 @@ Three different libraries, three different APIs, manual buffer passing, no error
 
 ## The Solution: Deterministic Workflow Engine
 
-imgflo provides three deterministic primitives that work consistently across all image types:
+floimg provides three deterministic primitives that work consistently across all image types:
 
 ```
 generate(generator, params) → ImageBlob
@@ -92,34 +92,34 @@ save(blob, destination) → SaveResult
 ### The Same Workflow, Any Image Type
 
 ```typescript
-import createClient from 'imgflo';
-import quickchart from 'imgflo-quickchart';
+import createClient from 'floimg';
+import quickchart from 'floimg-quickchart';
 
-const imgflo = createClient();
-imgflo.registerGenerator(quickchart());
+const floimg = createClient();
+floimg.registerGenerator(quickchart());
 
 // 1. Generate (same API whether it's a chart, QR code, or AI image)
-const chart = await imgflo.generate({
+const chart = await floimg.generate({
   generator: 'quickchart',
   params: { type: 'bar', data: {...} }
 });
 
 // 2. Transform (consistent across all image types)
-const resized = await imgflo.transform({
+const resized = await floimg.transform({
   blob: chart,
   op: 'resize',
   params: { width: 400, height: 300 }
 });
 
 // 3. Save (same API for filesystem, S3, or any provider)
-const result = await imgflo.save(resized, 's3://my-bucket/chart.png');
+const result = await floimg.save(resized, 's3://my-bucket/chart.png');
 ```
 
-### How LLMs and imgflo Work Together
+### How LLMs and floimg Work Together
 
 The key insight is **division of labor**:
 
-| LLM's Job | imgflo's Job |
+| LLM's Job | floimg's Job |
 |-----------|-------------|
 | Parse natural language | Execute structured workflows |
 | Extract data ("Q1: 10, Q2: 20") | Generate images from params |
@@ -141,7 +141,7 @@ The key insight is **division of labor**:
    })
    ```
 
-3. **imgflo executes deterministically** — same params always produce same output
+3. **floimg executes deterministically** — same params always produce same output
 
 ### Why This Matters
 
@@ -154,7 +154,7 @@ The key insight is **division of labor**:
 **For LLM integrations:**
 - Clear contract between natural language and execution
 - Predictable outputs for precise operations
-- LLM focuses on intent, imgflo handles execution
+- LLM focuses on intent, floimg handles execution
 
 **For automation and CI/CD:**
 - Declarative YAML workflows
@@ -163,22 +163,22 @@ The key insight is **division of labor**:
 
 ---
 
-## What imgflo Explicitly Does NOT Do
+## What floimg Explicitly Does NOT Do
 
-imgflo stays focused. It does not:
+floimg stays focused. It does not:
 
 - **Parse natural language** — That's the LLM's job
 - **Infer missing parameters** — You specify what you want
 - **Guess user intent** — Explicit workflows only
 - **Reinvent image libraries** — It orchestrates existing tools
 
-This focus is intentional. imgflo is **glue, not the engine**. It connects you to the best existing tools (Chart.js, Sharp, Playwright, OpenAI) through a unified interface.
+This focus is intentional. floimg is **glue, not the engine**. It connects you to the best existing tools (Chart.js, Sharp, Playwright, OpenAI) through a unified interface.
 
 ---
 
 ## Related Documents
 
-- [[Design-Principles]] — The philosophy driving imgflo's architecture
+- [[Design-Principles]] — The philosophy driving floimg's architecture
 - [[Workflow-Abstraction]] — Technical deep-dive on generate→transform→save
 - [[Roadmap]] — Focus areas and direction
 - [[Plugin-Architecture]] — How generators and transforms work

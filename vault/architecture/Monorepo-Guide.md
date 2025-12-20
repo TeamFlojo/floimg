@@ -1,18 +1,18 @@
-# imgflo Monorepo
+# floimg Monorepo
 
 This repository uses a pnpm workspace monorepo structure to manage the core library and plugin packages.
 
 ## Structure
 
 ```
-imgflo/
+floimg/
 ├── packages/
-│   ├── imgflo/              # Core library
-│   ├── imgflo-d3/           # D3 visualization plugin
-│   ├── imgflo-mermaid/      # Mermaid diagram plugin
-│   ├── imgflo-qr/           # QR code plugin
-│   ├── imgflo-quickchart/   # QuickChart plugin
-│   └── imgflo-screenshot/   # Screenshot plugin
+│   ├── floimg/              # Core library
+│   ├── floimg-d3/           # D3 visualization plugin
+│   ├── floimg-mermaid/      # Mermaid diagram plugin
+│   ├── floimg-qr/           # QR code plugin
+│   ├── floimg-quickchart/   # QuickChart plugin
+│   └── floimg-screenshot/   # Screenshot plugin
 ├── vault/                   # Documentation (Obsidian-compatible)
 ├── pnpm-workspace.yaml      # Workspace config
 ├── package.json             # Root scripts
@@ -40,8 +40,8 @@ npm install -g pnpm
 
 ```bash
 # Clone the repository
-git clone https://github.com/bcooke/imgflo.git
-cd imgflo
+git clone https://github.com/bcooke/floimg.git
+cd floimg
 
 # Install all dependencies (automatically installs for all packages)
 pnpm install
@@ -63,7 +63,7 @@ pnpm test
 pnpm -r build
 
 # Build specific package
-cd packages/imgflo-quickchart
+cd packages/floimg-quickchart
 pnpm build
 
 # Dev mode for all packages (parallel)
@@ -78,15 +78,15 @@ pnpm -r clean
 ### 1. Create Package Directory
 
 ```bash
-mkdir -p packages/imgflo-myplugin/src
-cd packages/imgflo-myplugin
+mkdir -p packages/floimg-myplugin/src
+cd packages/floimg-myplugin
 ```
 
 ### 2. Create package.json
 
 ```json
 {
-  "name": "imgflo-myplugin",
+  "name": "floimg-myplugin",
   "version": "0.1.0",
   "description": "Description of your generator",
   "type": "module",
@@ -105,10 +105,10 @@ cd packages/imgflo-myplugin
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
-    "imgflo": "workspace:*"
+    "floimg": "workspace:*"
   },
   "devDependencies": {
-    "imgflo": "workspace:*",
+    "floimg": "workspace:*",
     "typescript": "^5.7.2"
   }
 }
@@ -136,7 +136,7 @@ cd packages/imgflo-myplugin
 
 ```typescript
 // src/index.ts
-import type { ImageGenerator, ImageBlob } from "imgflo";
+import type { ImageGenerator, ImageBlob } from "floimg";
 
 export default function myGenerator(config = {}): ImageGenerator {
   return {
@@ -184,7 +184,7 @@ The `workspace:*` protocol in `package.json` means "use the local version during
 ```json
 {
   "peerDependencies": {
-    "imgflo": "workspace:*"  // Links to local packages/imgflo
+    "floimg": "workspace:*"  // Links to local packages/floimg
   }
 }
 ```
@@ -193,7 +193,7 @@ When published to npm, this becomes:
 ```json
 {
   "peerDependencies": {
-    "imgflo": "^0.1.0"  // Real version number
+    "floimg": "^0.1.0"  // Real version number
   }
 }
 ```
@@ -203,7 +203,7 @@ When published to npm, this becomes:
 ### Publishing Core
 
 ```bash
-cd packages/imgflo
+cd packages/floimg
 npm version patch  # or minor, major
 pnpm build
 npm publish
@@ -214,7 +214,7 @@ npm publish
 Each plugin publishes independently:
 
 ```bash
-cd packages/imgflo-quickchart
+cd packages/floimg-quickchart
 npm version patch
 pnpm build
 npm publish
@@ -226,15 +226,15 @@ To test a plugin in another project before publishing:
 
 ```bash
 # In the monorepo
-cd packages/imgflo-myplugin
+cd packages/floimg-myplugin
 pnpm build
 npm link
 
 # In your test project
-npm link imgflo-myplugin
+npm link floimg-myplugin
 
 # Use it
-import myplugin from 'imgflo-myplugin';
+import myplugin from 'floimg-myplugin';
 ```
 
 ## Adding Dependencies
@@ -242,7 +242,7 @@ import myplugin from 'imgflo-myplugin';
 ### Add to Specific Package
 
 ```bash
-cd packages/imgflo-quickchart
+cd packages/floimg-quickchart
 pnpm add some-dependency
 ```
 
@@ -258,14 +258,14 @@ The `-w` flag adds to workspace root.
 ## Package Relationships
 
 ```
-imgflo (core)
+floimg (core)
   ↑ peer dependency
   │
-  ├── imgflo-d3
-  ├── imgflo-mermaid
-  ├── imgflo-qr
-  ├── imgflo-quickchart
-  └── imgflo-screenshot
+  ├── floimg-d3
+  ├── floimg-mermaid
+  ├── floimg-qr
+  ├── floimg-quickchart
+  └── floimg-screenshot
 ```
 
 - **Core**: Provides ImageGenerator interface and base functionality
@@ -297,9 +297,9 @@ params: {
   data: { labels: [...], datasets: [...] }
 }
 
-// ❌ Bad: imgflo abstraction
+// ❌ Bad: floimg abstraction
 params: {
-  chartType: 'bar',  // Custom imgflo format
+  chartType: 'bar',  // Custom floimg format
   xAxis: [...],
   yAxis: [...]
 }
@@ -349,7 +349,7 @@ pnpm -r test
 
 ## Troubleshooting
 
-### "Cannot find module 'imgflo'"
+### "Cannot find module 'floimg'"
 
 ```bash
 # Rebuild all packages
@@ -368,9 +368,9 @@ pnpm install
 
 Make sure you've built the core package first:
 ```bash
-cd packages/imgflo
+cd packages/floimg
 pnpm build
-cd ../imgflo-myplugin
+cd ../floimg-myplugin
 pnpm build
 ```
 

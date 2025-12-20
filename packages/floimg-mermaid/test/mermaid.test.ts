@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import mermaid from '../src/index.js';
 
-describe('imgflo-mermaid', () => {
+describe('floimg-mermaid', () => {
   it('should create a generator with default config', () => {
     const generator = mermaid();
     expect(generator.name).toBe('mermaid');

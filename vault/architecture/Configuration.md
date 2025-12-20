@@ -1,22 +1,22 @@
 # Configuration
 
-imgflo supports flexible configuration through multiple sources.
+floimg supports flexible configuration through multiple sources.
 
 ## Priority Order
 
 Configuration is loaded in this order (highest to lowest priority):
 
 1. **CLI arguments** - Immediate overrides (`--bucket`, `--region`)
-2. **Local config file** - Project-specific (`./imgflo.config.ts`)
-3. **Global config file** - User-wide (`~/.imgflo/config.json`)
+2. **Local config file** - Project-specific (`./floimg.config.ts`)
+3. **Global config file** - User-wide (`~/.floimg/config.json`)
 4. **Environment variables** - Fallback
 
 ## Configuration File
 
-Create `imgflo.config.ts` in your project root:
+Create `floimg.config.ts` in your project root:
 
 ```typescript
-import type { ImgfloConfig } from 'imgflo';
+import type { ImgfloConfig } from 'floimg';
 
 export default {
   save: {
@@ -44,7 +44,7 @@ export default {
 } satisfies ImgfloConfig;
 ```
 
-Or use JSON (`.imgflorc.json`):
+Or use JSON (`.floimgrc.json`):
 
 ```json
 {
@@ -78,25 +78,25 @@ OPENAI_API_KEY=sk-...
 
 ```bash
 # Interactive setup
-imgflo config init
+floimg config init
 
 # Set values
-imgflo config set save.s3.bucket my-bucket
-imgflo config set save.s3.region us-east-1
+floimg config set save.s3.bucket my-bucket
+floimg config set save.s3.region us-east-1
 
 # View config
-imgflo config get
+floimg config get
 
 # Check config paths
-imgflo config path
+floimg config path
 
 # Verify setup
-imgflo doctor
+floimg doctor
 ```
 
 ## S3-Compatible Storage
 
-imgflo works with any S3-compatible storage:
+floimg works with any S3-compatible storage:
 
 | Provider | Endpoint Example |
 |----------|-----------------|
@@ -124,17 +124,17 @@ The `save()` method automatically detects storage provider:
 
 ```typescript
 // Filesystem (relative or absolute paths)
-await imgflo.save(img, './output/image.png');
-await imgflo.save(img, '/absolute/path/image.png');
+await floimg.save(img, './output/image.png');
+await floimg.save(img, '/absolute/path/image.png');
 
 // S3 via protocol
-await imgflo.save(img, 's3://bucket/key.png');
+await floimg.save(img, 's3://bucket/key.png');
 
 // Use configured default
-const imgflo = createClient({
+const floimg = createClient({
   save: { default: 's3', s3: { bucket: 'my-bucket' } }
 });
-await imgflo.save(img, 'image.png'); // Uses S3
+await floimg.save(img, 'image.png'); // Uses S3
 ```
 
 ## Security Best Practices
@@ -142,7 +142,7 @@ await imgflo.save(img, 'image.png'); // Uses S3
 **Do:**
 - Store secrets in environment variables
 - Use IAM roles when running on AWS
-- Add `.imgflorc.json` to `.gitignore` if it contains secrets
+- Add `.floimgrc.json` to `.gitignore` if it contains secrets
 
 **Don't:**
 - Commit API keys or secrets to git
@@ -151,7 +151,7 @@ await imgflo.save(img, 'image.png'); // Uses S3
 
 ## AWS Credentials
 
-imgflo uses the AWS SDK credential chain:
+floimg uses the AWS SDK credential chain:
 
 1. Config file credentials
 2. Environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)

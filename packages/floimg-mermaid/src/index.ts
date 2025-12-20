@@ -59,7 +59,7 @@ export const mermaidSchema: GeneratorSchema = {
  * Mermaid diagram generator - creates diagrams using Mermaid syntax
  *
  * This generator accepts Mermaid diagram syntax directly (pass-through pattern).
- * No imgflo abstraction - you get full Mermaid capabilities.
+ * No floimg abstraction - you get full Mermaid capabilities.
  *
  * @see https://mermaid.js.org/intro/ - Mermaid documentation
  *

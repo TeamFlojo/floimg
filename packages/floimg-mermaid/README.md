@@ -1,11 +1,11 @@
-# imgflo-mermaid
+# floimg-mermaid
 
-Mermaid diagram generator for imgflo - create flowcharts, sequence diagrams, class diagrams, and more using Mermaid syntax.
+Mermaid diagram generator for floimg - create flowcharts, sequence diagrams, class diagrams, and more using Mermaid syntax.
 
 ## Installation
 
 ```bash
-npm install imgflo imgflo-mermaid
+npm install floimg floimg-mermaid
 ```
 
 This will install Mermaid CLI (~50MB including dependencies).
@@ -13,10 +13,10 @@ This will install Mermaid CLI (~50MB including dependencies).
 ## Usage
 
 ```typescript
-import createClient from 'imgflo';
-import mermaid from 'imgflo-mermaid';
+import createClient from 'floimg';
+import mermaid from 'floimg-mermaid';
 
-const imgflo = createClient({
+const floimg = createClient({
   store: {
     default: 's3',
     s3: { region: 'us-east-1', bucket: 'my-diagrams' }
@@ -24,10 +24,10 @@ const imgflo = createClient({
 });
 
 // Register the Mermaid generator
-imgflo.registerGenerator(mermaid());
+floimg.registerGenerator(mermaid());
 
 // Generate a flowchart
-const diagram = await imgflo.generate({
+const diagram = await floimg.generate({
   generator: 'mermaid',
   params: {
     code: `
@@ -42,7 +42,7 @@ const diagram = await imgflo.generate({
 });
 
 // Upload to S3
-const result = await imgflo.save(diagram, './output/flow.svg');
+const result = await floimg.save(diagram, './output/flow.svg');
 console.log(result.url);
 ```
 
@@ -53,7 +53,7 @@ Mermaid supports many diagram types - all available via pass-through syntax:
 ### Flowchart
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'mermaid',
   params: {
     code: `
@@ -70,7 +70,7 @@ await imgflo.generate({
 ### Sequence Diagram
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'mermaid',
   params: {
     code: `
@@ -86,7 +86,7 @@ await imgflo.generate({
 ### Class Diagram
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'mermaid',
   params: {
     code: `
@@ -109,7 +109,7 @@ await imgflo.generate({
 ### State Diagram
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'mermaid',
   params: {
     code: `
@@ -128,7 +128,7 @@ await imgflo.generate({
 ### Entity Relationship Diagram
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'mermaid',
   params: {
     code: `
@@ -144,7 +144,7 @@ await imgflo.generate({
 ### Gantt Chart
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'mermaid',
   params: {
     code: `
@@ -162,7 +162,7 @@ await imgflo.generate({
 ### Pie Chart
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'mermaid',
   params: {
     code: `
@@ -178,7 +178,7 @@ await imgflo.generate({
 ### Git Graph
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'mermaid',
   params: {
     code: `
@@ -201,7 +201,7 @@ await imgflo.generate({
 ### Generator Options
 
 ```typescript
-imgflo.registerGenerator(mermaid({
+floimg.registerGenerator(mermaid({
   theme: 'dark',              // Default theme
   backgroundColor: '#1a1a1a', // Default background
   format: 'svg',              // 'svg' | 'png'
@@ -213,7 +213,7 @@ imgflo.registerGenerator(mermaid({
 ### Per-Diagram Overrides
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'mermaid',
   params: {
     code: '...',
@@ -238,7 +238,7 @@ await imgflo.generate({
 Pass Mermaid config object directly:
 
 ```typescript
-await imgflo.generate({
+await floimg.generate({
   generator: 'mermaid',
   params: {
     code: '...',
@@ -272,7 +272,7 @@ Since this generator uses Mermaid syntax directly, refer to the official Mermaid
 ### System Architecture
 
 ```typescript
-const architecture = await imgflo.generate({
+const architecture = await floimg.generate({
   generator: 'mermaid',
   params: {
     code: `
@@ -300,7 +300,7 @@ const architecture = await imgflo.generate({
 ### User Journey
 
 ```typescript
-const journey = await imgflo.generate({
+const journey = await floimg.generate({
   generator: 'mermaid',
   params: {
     code: `
@@ -321,12 +321,12 @@ const journey = await imgflo.generate({
 ### Mind Map
 
 ```typescript
-const mindMap = await imgflo.generate({
+const mindMap = await floimg.generate({
   generator: 'mermaid',
   params: {
     code: `
       mindmap
-        root((imgflo))
+        root((floimg))
           Generators
             Shapes
             OpenAI
@@ -349,7 +349,7 @@ const mindMap = await imgflo.generate({
 
 ```typescript
 // Returns scalable vector graphic
-const svg = await imgflo.generate({
+const svg = await floimg.generate({
   generator: 'mermaid',
   params: { code: '...', format: 'svg' }
 });
@@ -359,7 +359,7 @@ const svg = await imgflo.generate({
 
 ```typescript
 // Returns raster image
-const png = await imgflo.generate({
+const png = await floimg.generate({
   generator: 'mermaid',
   params: {
     code: '...',
@@ -421,6 +421,6 @@ MIT
 
 ## See Also
 
-- [imgflo](https://github.com/bcooke/imgflo) - Core library
+- [floimg](https://github.com/bcooke/floimg) - Core library
 - [Mermaid](https://mermaid.js.org) - Diagram library
 - [Mermaid Live Editor](https://mermaid.live) - Test diagrams

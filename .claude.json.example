@@ -1,9 +1,9 @@
 {
   "mcpServers": {
-    "imgflo": {
+    "floimg": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "imgflo"],
+      "args": ["-y", "floimg"],
       "env": {
         "AWS_REGION": "us-east-1",
         "S3_BUCKET": "your-bucket-name"

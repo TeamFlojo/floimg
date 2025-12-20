@@ -1,7 +1,7 @@
 /**
  * Basic example: Generate SVG → Convert to PNG → Save
  *
- * This demonstrates the core workflow that makes imgflo useful for AI agents:
+ * This demonstrates the core workflow that makes floimg useful for AI agents:
  * 1. Generate an image (easy for LLMs since it's just code/parameters)
  * 2. Convert to a web-friendly format
  * 3. Save to filesystem or cloud storage
@@ -11,7 +11,7 @@ import createClient from "../src/index.js";
 
 async function main() {
   // Create client (zero-config for filesystem, or add S3 config for cloud)
-  const imgflo = createClient({
+  const floimg = createClient({
     verbose: true,
     save: {
       default: "s3",
@@ -24,7 +24,7 @@ async function main() {
   });
 
   console.log("🎨 Generating gradient SVG...");
-  const svg = await imgflo.generate({
+  const svg = await floimg.generate({
     generator: "shapes",
     params: {
       type: "gradient",
@@ -38,7 +38,7 @@ async function main() {
   console.log(`✓ Generated SVG: ${svg.width}x${svg.height}`);
 
   console.log("\n🔄 Converting SVG to PNG...");
-  const png = await imgflo.transform({
+  const png = await floimg.transform({
     blob: svg,
     op: "convert",
     to: "image/png",
@@ -47,7 +47,7 @@ async function main() {
   console.log(`✓ Converted to PNG: ${png.width}x${png.height}`);
 
   console.log("\n💾 Saving to S3...");
-  const result = await imgflo.save(png, "s3://my-images/examples/gradient.png");
+  const result = await floimg.save(png, "s3://my-images/examples/gradient.png");
 
   console.log(`✓ Save complete!`);
   console.log(`   Provider: ${result.provider}`);
@@ -59,7 +59,7 @@ async function main() {
 
   // Alternative: Save to filesystem instead
   console.log("\n📁 Also saving to local file...");
-  const localResult = await imgflo.save(png, "./output/gradient.png");
+  const localResult = await floimg.save(png, "./output/gradient.png");
   console.log(`✓ Saved locally: ${localResult.location}`);
 }
 

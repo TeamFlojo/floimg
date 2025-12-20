@@ -41,7 +41,7 @@ When invoking this agent, include:
 
 ### Generator Pattern
 ```typescript
-import { createGenerator, GeneratorSchema } from 'imgflo';
+import { createGenerator, GeneratorSchema } from 'floimg';
 
 const schema: GeneratorSchema = {
   name: 'my-generator',
@@ -58,7 +58,7 @@ export const myGenerator = createGenerator(schema, async (params, ctx) => {
 
 ### Transform Pattern
 ```typescript
-import { createTransform, TransformSchema } from 'imgflo';
+import { createTransform, TransformSchema } from 'floimg';
 
 const schema: TransformSchema = {
   name: 'my-transform',

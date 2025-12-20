@@ -4,7 +4,7 @@ import { join } from "path";
 import { homedir } from "os";
 
 export const configCommand = new Command("config")
-  .description("Manage imgflo configuration")
+  .description("Manage floimg configuration")
   .addCommand(
     new Command("set")
       .description("Set a configuration value")
@@ -54,7 +54,7 @@ export const configCommand = new Command("config")
 
           await saveGlobalConfig(config);
           console.log(`✓ Configuration saved: ${key} = ${value.includes('key') || value.includes('secret') ? '***' : value}`);
-          console.log(`  Location: ${join(homedir(), ".imgflo", "config.json")}`);
+          console.log(`  Location: ${join(homedir(), ".floimg", "config.json")}`);
         } catch (error) {
           console.error("Error saving configuration:", error instanceof Error ? error.message : error);
           process.exit(1);
@@ -100,9 +100,9 @@ export const configCommand = new Command("config")
   )
   .addCommand(
     new Command("init")
-      .description("Initialize imgflo configuration interactively")
+      .description("Initialize floimg configuration interactively")
       .action(async () => {
-        console.log("imgflo configuration setup");
+        console.log("floimg configuration setup");
         console.log("=========================\n");
 
         const readline = await import('readline');
@@ -152,10 +152,10 @@ export const configCommand = new Command("config")
 
           await saveGlobalConfig(config);
 
-          console.log("\n✓ Configuration saved to:", join(homedir(), ".imgflo", "config.json"));
-          console.log("\nYou can now use imgflo without setting environment variables!");
+          console.log("\n✓ Configuration saved to:", join(homedir(), ".floimg", "config.json"));
+          console.log("\nYou can now use floimg without setting environment variables!");
           console.log("\nTry it:");
-          console.log("  imgflo generate --provider svg --params '{\"type\":\"gradient\"}' --out test.svg");
+          console.log("  floimg generate --provider svg --params '{\"type\":\"gradient\"}' --out test.svg");
 
           rl.close();
         } catch (error) {
@@ -170,10 +170,10 @@ export const configCommand = new Command("config")
       .description("Show configuration file location")
       .action(() => {
         console.log("Configuration file locations (in order of priority):");
-        console.log("  1. ./imgflo.config.ts (current directory)");
-        console.log("  2. ./.imgflorc.json (current directory)");
-        console.log("  3. ~/.imgflo/config.json (global)");
+        console.log("  1. ./floimg.config.ts (current directory)");
+        console.log("  2. ./.floimgrc.json (current directory)");
+        console.log("  3. ~/.floimg/config.json (global)");
         console.log("  4. Environment variables");
-        console.log("\nGlobal config location:", join(homedir(), ".imgflo", "config.json"));
+        console.log("\nGlobal config location:", join(homedir(), ".floimg", "config.json"));
       })
   );

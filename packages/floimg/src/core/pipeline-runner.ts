@@ -1,7 +1,7 @@
 /**
  * Pipeline execution engine with parallel step support
  *
- * This module provides dependency analysis and parallel execution for imgflo pipelines.
+ * This module provides dependency analysis and parallel execution for floimg pipelines.
  * Steps are grouped into "waves" based on their dependencies, and each wave is executed
  * concurrently (bounded by the pipeline's concurrency setting).
  */

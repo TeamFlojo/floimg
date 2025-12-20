@@ -38,7 +38,7 @@ What actually happens.
 
 ## Environment
 
-- **Package**: imgflo / imgflo-{plugin}
+- **Package**: floimg / floimg-{plugin}
 - **Version**:
 - **Node Version**:
 - **OS**:

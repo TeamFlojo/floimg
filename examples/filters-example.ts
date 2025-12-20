@@ -5,12 +5,12 @@
  * added in v0.3.0: filters, effects, borders, text, and preset filters.
  */
 
-import createClient from 'imgflo';
+import createClient from 'floimg';
 
 async function main() {
   const client = createClient();
 
-  console.log('🎨 imgflo v0.3.0 - Filters, Effects, and Text Demo\n');
+  console.log('🎨 floimg v0.3.0 - Filters, Effects, and Text Demo\n');
 
   // Generate a simple gradient as our base image
   console.log('1. Generating base gradient...');
@@ -92,7 +92,7 @@ async function main() {
     blob: baseImage,
     op: 'addText',
     params: {
-      text: 'imgflo v0.3.0',
+      text: 'floimg v0.3.0',
       x: 400,
       y: 300,
       size: 64,
@@ -164,7 +164,7 @@ async function main() {
     blob: vintageWithText,
     op: 'addCaption',
     params: {
-      text: 'Created with imgflo v0.3.0',
+      text: 'Created with floimg v0.3.0',
       position: 'bottom'
     }
   });

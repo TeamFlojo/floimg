@@ -2,7 +2,7 @@
 
 ## Overview
 
-imgflo includes a Model Context Protocol (MCP) server that enables direct integration with AI assistants like Claude Code.
+floimg includes a Model Context Protocol (MCP) server that enables direct integration with AI assistants like Claude Code.
 
 ## Components
 
@@ -15,16 +15,16 @@ A complete MCP server implementation using the official TypeScript SDK:
   - `transform_image` - Convert formats, resize, optimize
   - `upload_image` - Upload to S3/filesystem and get URLs
 - **Full error handling** - Consistent error responses
-- **Configuration integration** - Uses imgflo's config system
+- **Configuration integration** - Uses floimg's config system
 
 ### Binary Entry Point
 
-The `imgflo-mcp` binary in package.json:
+The `floimg-mcp` binary in package.json:
 ```json
 {
   "bin": {
-    "imgflo": "./dist/cli/index.js",
-    "imgflo-mcp": "./dist/mcp/server.js"
+    "floimg": "./dist/cli/index.js",
+    "floimg-mcp": "./dist/mcp/server.js"
   }
 }
 ```
@@ -34,12 +34,12 @@ The `imgflo-mcp` binary in package.json:
 ### Request Flow
 
 ```
-Claude Code → JSON-RPC → stdio → imgflo-mcp → imgflo core → Response
+Claude Code → JSON-RPC → stdio → floimg-mcp → floimg core → Response
 ```
 
 1. Claude Code sends JSON-RPC request via stdio
 2. MCP server receives and validates request
-3. Server calls imgflo core library (generate/transform/upload)
+3. Server calls floimg core library (generate/transform/upload)
 4. Results are serialized (base64 for images) and returned
 5. Claude Code receives response and continues workflow
 
@@ -100,9 +100,9 @@ Errors are caught and returned in consistent format:
 
 ### Configuration
 
-The MCP server inherits all imgflo configuration:
+The MCP server inherits all floimg configuration:
 - Environment variables (AWS_REGION, S3_BUCKET, etc.)
-- Config files (imgflo.config.ts, .imgflorc.json, ~/.imgflo/config.json)
+- Config files (floimg.config.ts, .floimgrc.json, ~/.floimg/config.json)
 - CLI arguments (when applicable)
 
 ## Technical Decisions

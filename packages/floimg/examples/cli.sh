@@ -1,17 +1,17 @@
 #!/bin/bash
 
-# Example: Using imgflo CLI for the complete workflow
-# This shows how an AI agent could easily shell out to imgflo commands
+# Example: Using floimg CLI for the complete workflow
+# This shows how an AI agent could easily shell out to floimg commands
 
 echo "🎨 Example 1: Generate gradient and save locally"
-imgflo generate \
+floimg generate \
   --generator shapes \
   --params '{"type":"gradient","width":1200,"height":630,"color1":"#667eea","color2":"#764ba2"}' \
   --out gradient.svg
 
 echo ""
 echo "🔄 Convert SVG to PNG"
-imgflo transform \
+floimg transform \
   --in gradient.svg \
   --op convert \
   --to image/png \
@@ -19,13 +19,13 @@ imgflo transform \
 
 echo ""
 echo "💾 Save to filesystem"
-imgflo save \
+floimg save \
   --in gradient.png \
   --out ./output/gradient.png
 
 echo ""
 echo "☁️  Or save to S3 using URI syntax"
-imgflo save \
+floimg save \
   --in gradient.png \
   --out s3://my-bucket/examples/gradient.png
 
@@ -34,12 +34,12 @@ echo "---"
 echo ""
 
 echo "🎨 Example 2: Generate pattern with different colors"
-imgflo generate \
+floimg generate \
   --generator shapes \
   --params '{"type":"pattern","patternType":"dots","width":800,"height":600}' \
   --out pattern.svg
 
-imgflo transform --in pattern.svg --op convert --to image/png --out pattern.png
+floimg transform --in pattern.svg --op convert --to image/png --out pattern.png
 
 echo ""
 echo "✨ Done! Check the output files:"

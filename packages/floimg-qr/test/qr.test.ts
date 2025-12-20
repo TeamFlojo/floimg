@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import qr from '../src/index.js';
 
-describe('imgflo-qr', () => {
+describe('floimg-qr', () => {
   it('should create a generator with default config', () => {
     const generator = qr();
     expect(generator.name).toBe('qr');
@@ -12,7 +12,7 @@ describe('imgflo-qr', () => {
     const generator = qr();
 
     const result = await generator.generate({
-      text: 'https://github.com/bcooke/imgflo'
+      text: 'https://github.com/bcooke/floimg'
     });
 
     expect(result.bytes).toBeInstanceOf(Buffer);
