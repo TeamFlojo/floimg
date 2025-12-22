@@ -13,7 +13,10 @@
     "format": "prettier --write \"packages/*/src/**/*.ts\"",
     "format:check": "prettier --check \"packages/*/src/**/*.ts\"",
     "clean": "pnpm -r clean && rm -rf node_modules",
-    "prepare": "husky"
+    "prepare": "husky",
+    "audit": "pnpm audit",
+    "audit:deprecated": "pnpm install --dry-run 2>&1 | grep -i 'deprecated' && exit 1 || echo '✅ No deprecated dependencies'",
+    "prerelease": "pnpm audit:deprecated && pnpm typecheck && pnpm test"
   },
   "lint-staged": {
     "*.ts": [
@@ -38,6 +41,16 @@
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "openai": "^6.0.0"
+    },
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "@teamflojo/floimg": ">=0.2.0"
+      }
+    }
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
