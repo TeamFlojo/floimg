@@ -8,6 +8,7 @@ import { Gallery } from "./components/Gallery";
 import { TemplateGallery } from "./components/TemplateGallery";
 import { WorkflowLibrary } from "./components/WorkflowLibrary";
 import { AISettings } from "./components/AISettings";
+import { OnboardingModal } from "./components/OnboardingModal";
 import { useWorkflowStore } from "./stores/workflowStore";
 import { getTemplateById } from "./templates";
 import type { NodeDefinition } from "@teamflojo/floimg-studio-shared";
@@ -91,8 +92,28 @@ function App() {
     event.dataTransfer.dropEffect = "move";
   }, []);
 
+  // Handle onboarding template selection
+  const handleOnboardingTemplate = useCallback(
+    (templateId: string) => {
+      const template = getTemplateById(templateId);
+      if (template) {
+        loadTemplate(template);
+        setActiveTab("editor");
+      }
+    },
+    [loadTemplate]
+  );
+
+  // Handle onboarding skip - go to templates tab
+  const handleOnboardingSkip = useCallback(() => {
+    setActiveTab("templates");
+  }, []);
+
   return (
     <ReactFlowProvider>
+      {/* Onboarding Modal (first visit only) */}
+      <OnboardingModal onSelectTemplate={handleOnboardingTemplate} onSkip={handleOnboardingSkip} />
+
       {/* AI Settings Modal */}
       <AISettings />
 
