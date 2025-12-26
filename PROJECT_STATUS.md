@@ -4,18 +4,21 @@
 
 ## Current Focus
 
-**T-2025-003: Fix Node Dragging** (P0 CRITICAL) - IN PROGRESS
-
-- Bug: Nodes cannot be dragged on canvas
-- Root cause: Missing `nodesDraggable` prop on ReactFlow
-- Branch: `fix/T-2025-003-node-dragging`
+None - ready for next task
 
 ## Next Up
 
-**T-2025-004**: Fix [object Object] display bug in nodes
-**T-2025-005**: Reduce node width (max-w-[220px])
+- Create PR for T-2025-003 fixes
+- Additional FloImg Studio UX improvements
 
 ## Just Completed
+
+**T-2025-003: Fix Node Dragging + UX Issues** (2025-12-26)
+
+- Fixed: Nodes can now be dragged on canvas (added `nodesDraggable` prop)
+- Fixed: [object Object] display bug in node parameters
+- Node width verified as reasonable (173px)
+- Branch: `fix/T-2025-003-node-dragging`
 
 **T-2025-001: AI Transforms and Community Documentation** (2025-12-25)
 
