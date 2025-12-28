@@ -9,9 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No unreleased changes._
 
-## [0.6.0] - 2025-12-26
+## [0.6.0] - 2025-12-28
 
 ### Added
+
+#### Fluent API
+
+- **FluentBuilder class**: Chainable syntax for building image workflows
+  - Entry points: `floimg.from()`, `floimg.generate()`
+  - Chaining: `.transform()`, `.analyze()`, `.text()`
+  - Terminal methods: `.to()`, `.toBlob()`, `.run()`
+- **createFluent() factory**: Create fluent facade for custom client configurations
+- **floimg singleton**: Pre-configured fluent API export for quick usage
+
+```typescript
+await floimg.from("./input.png").transform("resize", { width: 800 }).to("./output.png");
+```
 
 #### AI Provider Packages
 
@@ -40,6 +53,8 @@ _No unreleased changes._
 
 ### Changed
 
+- **Studio executor refactored**: Now uses floimg's core pipeline runner instead of custom wave execution
+- **Pipeline runner**: Vision and text step kinds now properly tracked in dependency graph
 - Extracted OpenAI provider to separate `@teamflojo/floimg-openai` package
 - TransformProvider interface now requires `transform()` method
 - Class renamed from `Floimg` to `FloImg` for consistency
