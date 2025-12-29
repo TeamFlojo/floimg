@@ -244,6 +244,7 @@ export const useWorkflowStore = create<WorkflowStore>()(
           data = {
             operation: definition.name,
             providerName: definition.providerName, // Track which provider this transform belongs to
+            isAI: definition.isAI, // Track if this is an AI transform (can accept text input)
             params: getDefaultParams(definition),
           } as TransformNodeData;
         } else if (definition.type === "input") {
