@@ -28,6 +28,8 @@ export interface TransformNodeData {
   operation: string;
   /** Transform provider name (e.g., "gemini-transform", "sharp") for routing */
   providerName?: string;
+  /** Whether this transform is AI-powered and can accept text input */
+  isAI?: boolean;
   params: Record<string, unknown>;
 }
 
