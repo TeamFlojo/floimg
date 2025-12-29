@@ -233,6 +233,58 @@ export async function executeWorkflow(
       initialVariables,
     };
 
+    // Step 4.5: Resolve text inputs for AI transforms
+    // If any transform has _promptFromVar, we need to execute text nodes first
+    // and inject their output as the prompt
+    const textVarToResolve = new Set<string>();
+    for (const step of pipeline.steps) {
+      if (step.kind === "transform" && step.params._promptFromVar) {
+        textVarToResolve.add(step.params._promptFromVar as string);
+      }
+    }
+
+    if (textVarToResolve.size > 0) {
+      console.log(`Resolving ${textVarToResolve.size} text inputs for AI transforms`);
+
+      // Execute text/vision nodes first to get their outputs
+      const textSteps = pipeline.steps.filter(
+        (s) => (s.kind === "text" || s.kind === "vision") && textVarToResolve.has(s.out)
+      );
+
+      if (textSteps.length > 0) {
+        const textPipeline: Pipeline = {
+          name: "Text Resolution",
+          steps: textSteps as Pipeline["steps"],
+          initialVariables,
+        };
+
+        const textResults = await client.run(textPipeline);
+
+        // Store resolved text values
+        const resolvedText = new Map<string, string>();
+        for (const result of textResults) {
+          if (isDataBlob(result.value)) {
+            resolvedText.set(result.out, result.value.content);
+          }
+        }
+
+        // Inject resolved prompts into transform steps
+        for (const step of pipeline.steps) {
+          if (step.kind === "transform" && step.params._promptFromVar) {
+            const varName = step.params._promptFromVar as string;
+            const text = resolvedText.get(varName);
+            if (text) {
+              // Use resolved text as prompt (override any existing prompt)
+              step.params.prompt = text;
+              console.log(`Injected dynamic prompt for transform: "${text.slice(0, 50)}..."`);
+            }
+            // Clean up the marker
+            delete step.params._promptFromVar;
+          }
+        }
+      }
+    }
+
     console.log(`Executing pipeline with ${pipeline.steps.length} steps via core runner`);
 
     // Step 5: Map step indices to node IDs for callbacks
@@ -457,8 +509,16 @@ export function toPipeline(
       });
     } else if (node.type === "transform") {
       const data = node.data as TransformNodeData;
-      const inputEdge = edges.find((e) => e.target === node.id);
-      const inputVar = inputEdge ? nodeToVar.get(inputEdge.source) : undefined;
+
+      // Find image input edge (targetHandle is "image" or undefined for backward compat)
+      const imageEdge = edges.find(
+        (e) => e.target === node.id && (e.targetHandle === "image" || !e.targetHandle)
+      );
+      const inputVar = imageEdge ? nodeToVar.get(imageEdge.source) : undefined;
+
+      // Find text input edge (for AI transforms with dynamic prompts)
+      const textEdge = edges.find((e) => e.target === node.id && e.targetHandle === "text");
+      const textSourceVar = textEdge ? nodeToVar.get(textEdge.source) : undefined;
 
       // Inject API key for AI transforms if provider is specified
       let params = { ...data.params };
@@ -468,6 +528,12 @@ export function toPipeline(
           // Only inject if not already specified in params
           params = { ...params, apiKey };
         }
+      }
+
+      // If there's a text input, mark it for resolution
+      // The actual text will be injected during execution after text nodes complete
+      if (textSourceVar) {
+        params = { ...params, _promptFromVar: textSourceVar };
       }
 
       steps.push({

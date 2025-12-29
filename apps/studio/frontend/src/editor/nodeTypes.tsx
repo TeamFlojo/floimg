@@ -107,6 +107,7 @@ export const GeneratorNode = memo(function GeneratorNode({
 });
 
 // Transform Node (have both input and output)
+// AI transforms also have an optional text input at the top
 export const TransformNode = memo(function TransformNode({
   id,
   data,
@@ -119,11 +120,25 @@ export const TransformNode = memo(function TransformNode({
   const executionClass = getExecutionClass(nodeStatus);
   const borderClass = executionClass || (selected ? "border-teal-500" : "border-teal-200");
 
+  // AI transforms get a purple accent to indicate AI-powered
+  const isAI = data.isAI;
+
   return (
     <div
       className={`rounded-lg border-2 bg-white dark:bg-zinc-800 shadow-md min-w-[180px] overflow-hidden ${borderClass}`}
     >
-      <Handle type="target" position={Position.Left} className="w-3 h-3 !bg-teal-500" />
+      {/* Text input handle for AI transforms (optional - for dynamic prompts) */}
+      {isAI && (
+        <Handle
+          type="target"
+          position={Position.Top}
+          id="text"
+          className="w-3 h-3 !bg-pink-500"
+          title="Text input (optional prompt from text/vision node)"
+        />
+      )}
+      {/* Image input handle */}
+      <Handle type="target" position={Position.Left} id="image" className="w-3 h-3 !bg-teal-500" />
       {preview && previewVisible && (
         <div className="bg-gray-100 dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-700">
           <img src={preview} alt="Preview" className="w-full h-24 object-contain" />
@@ -131,12 +146,35 @@ export const TransformNode = memo(function TransformNode({
       )}
       <div className="px-4 py-3">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-3 h-3 rounded-full bg-teal-500" />
-          <span className="font-semibold text-sm text-teal-700 dark:text-teal-400">
+          {isAI ? (
+            <svg className="w-3 h-3 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M13 7H7v6h6V7z" />
+              <path
+                fillRule="evenodd"
+                d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z"
+                clipRule="evenodd"
+              />
+            </svg>
+          ) : (
+            <div className="w-3 h-3 rounded-full bg-teal-500" />
+          )}
+          <span
+            className={`font-semibold text-sm ${isAI ? "text-purple-700 dark:text-purple-400" : "text-teal-700 dark:text-teal-400"}`}
+          >
             {data.operation}
           </span>
-          <PreviewToggle nodeId={id} color="text-teal-500 dark:text-teal-400" />
+          <PreviewToggle
+            nodeId={id}
+            color={
+              isAI ? "text-purple-500 dark:text-purple-400" : "text-teal-500 dark:text-teal-400"
+            }
+          />
         </div>
+        {isAI && (
+          <div className="text-[10px] text-pink-500 dark:text-pink-400 mb-1">
+            ↑ Connect text node for dynamic prompt
+          </div>
+        )}
         <div className="text-xs text-gray-500 dark:text-zinc-400">
           {Object.entries(data.params)
             .filter(([, value]) => typeof value !== "object" || value === null)
