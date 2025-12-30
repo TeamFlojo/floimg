@@ -3,6 +3,8 @@ import type {
   TransformProvider,
   TransformOperationSchema,
   ImageBlob,
+  ImageGenerator,
+  GeneratorSchema,
   MimeType,
 } from "@teamflojo/floimg";
 
@@ -249,6 +251,180 @@ export function geminiTransform(config: GeminiTransformConfig = {}): TransformPr
       throw new Error(
         "Gemini transform provider does not support format conversion. Use the sharp provider instead."
       );
+    },
+  };
+}
+
+// ============================================================================
+// Gemini Image Generator (from text prompt only, no input image)
+// ============================================================================
+
+/**
+ * Schema for the Gemini image generator
+ */
+export const geminiGenerateSchema: GeneratorSchema = {
+  name: "gemini-generate",
+  description: "Generate images from text using Gemini's native image generation",
+  category: "AI",
+  parameters: {
+    prompt: {
+      type: "string",
+      title: "Prompt",
+      description: "Describe the image you want to generate",
+    },
+    model: {
+      type: "string",
+      title: "Model",
+      description: "Gemini model to use: Nano Banana (fast) or Nano Banana Pro (high quality)",
+      enum: [...GEMINI_IMAGE_MODELS],
+      default: "gemini-2.5-flash-image",
+    },
+    apiKey: {
+      type: "string",
+      title: "API Key",
+      description: "Google AI API key (optional - uses server key if not provided)",
+    },
+  },
+  requiredParameters: ["prompt"],
+  isAI: true,
+  requiresApiKey: true,
+  apiKeyEnvVar: "GOOGLE_AI_API_KEY",
+};
+
+/**
+ * Configuration for the Gemini image generator
+ */
+export interface GeminiGenerateConfig {
+  /** Default API key for Google AI / Gemini API */
+  apiKey?: string;
+  /** Default model to use */
+  model?: GeminiImageModel;
+}
+
+/**
+ * Create a Gemini image generator instance
+ *
+ * Generates images from text prompts using Gemini's native image generation.
+ * Uses the same models as Gemini Edit but without requiring an input image.
+ *
+ * @example
+ * ```typescript
+ * import createClient from '@teamflojo/floimg';
+ * import { geminiGenerate } from '@teamflojo/floimg-google';
+ *
+ * const floimg = createClient();
+ * floimg.registerGenerator(geminiGenerate());
+ *
+ * const image = await floimg.generate({
+ *   generator: 'gemini-generate',
+ *   params: {
+ *     prompt: 'A steaming espresso cup with dramatic lighting',
+ *     apiKey: userApiKey
+ *   }
+ * });
+ * ```
+ */
+export function geminiGenerate(config: GeminiGenerateConfig = {}): ImageGenerator {
+  const defaultApiKey = config.apiKey || process.env.GOOGLE_AI_API_KEY;
+  const defaultModel = config.model || "gemini-2.5-flash-image";
+
+  // Cache clients by API key
+  const clientCache = new Map<string, GoogleGenAI>();
+
+  function getClient(apiKey: string): GoogleGenAI {
+    let client = clientCache.get(apiKey);
+    if (!client) {
+      client = new GoogleGenAI({ apiKey });
+      clientCache.set(apiKey, client);
+    }
+    return client;
+  }
+
+  return {
+    name: "gemini-generate",
+    schema: geminiGenerateSchema,
+
+    async generate(params: Record<string, unknown>): Promise<ImageBlob> {
+      const {
+        prompt,
+        model = defaultModel,
+        apiKey: requestApiKey,
+      } = params as {
+        prompt: string;
+        model?: GeminiImageModel;
+        apiKey?: string;
+      };
+
+      const apiKey = requestApiKey || defaultApiKey;
+
+      if (!apiKey) {
+        throw new Error(
+          "Google AI API key is required. Provide apiKey in params or set GOOGLE_AI_API_KEY environment variable."
+        );
+      }
+
+      if (!prompt) {
+        throw new Error("prompt is required for Gemini image generation");
+      }
+
+      const client = getClient(apiKey);
+
+      // Call Gemini with just text prompt (no input image)
+      const response = await client.models.generateContent({
+        model,
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }],
+          },
+        ],
+        config: {
+          responseModalities: ["TEXT", "IMAGE"],
+        },
+      });
+
+      // Extract the generated image from the response
+      const candidates = response.candidates;
+      if (!candidates || candidates.length === 0) {
+        throw new Error("No response from Gemini");
+      }
+
+      const parts = candidates[0].content?.parts;
+      if (!parts) {
+        throw new Error("No content in Gemini response");
+      }
+
+      // Find the image part in the response
+      const imagePart = parts.find((part) => part.inlineData?.mimeType?.startsWith("image/"));
+      if (!imagePart?.inlineData?.data) {
+        const textPart = parts.find((part) => part.text);
+        if (textPart?.text) {
+          throw new Error(`Gemini could not generate the image: ${textPart.text}`);
+        }
+        throw new Error("No image returned from Gemini");
+      }
+
+      // Convert base64 response to Buffer
+      const bytes = Buffer.from(imagePart.inlineData.data, "base64");
+      const responseMime = imagePart.inlineData.mimeType || "image/png";
+      const mime: MimeType = responseMime.includes("jpeg")
+        ? "image/jpeg"
+        : responseMime.includes("webp")
+          ? "image/webp"
+          : "image/png";
+
+      return {
+        bytes,
+        mime,
+        width: 1024,
+        height: 1024,
+        source: `ai:gemini:${model}`,
+        metadata: {
+          operation: "generate",
+          prompt,
+          model,
+        },
+      };
     },
   };
 }

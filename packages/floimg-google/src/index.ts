@@ -219,6 +219,9 @@ export { googleImagen };
 // Transform provider exports
 export { geminiTransform, geminiEditSchema, type GeminiTransformConfig } from "./transforms.js";
 
+// Gemini image generator exports
+export { geminiGenerate, geminiGenerateSchema, type GeminiGenerateConfig } from "./transforms.js";
+
 // Text and Vision provider exports
 export {
   geminiText,

@@ -13,7 +13,12 @@ import mermaid from "@teamflojo/floimg-mermaid";
 import quickchart from "@teamflojo/floimg-quickchart";
 import openai, { openaiTransform } from "@teamflojo/floimg-openai";
 import stability, { stabilityTransform } from "@teamflojo/floimg-stability";
-import googleImagen, { geminiTransform, geminiText, geminiVision } from "@teamflojo/floimg-google";
+import googleImagen, {
+  geminiTransform,
+  geminiGenerate,
+  geminiText,
+  geminiVision,
+} from "@teamflojo/floimg-google";
 import { grokText, grokVision } from "@teamflojo/floimg-xai";
 import { replicateTransform } from "@teamflojo/floimg-replicate";
 
@@ -51,11 +56,12 @@ export function initializeClient(config: { verbose?: boolean } = {}): FloimgClie
   }
   if (process.env.GOOGLE_AI_API_KEY) {
     client.registerGenerator(googleImagen({ apiKey: process.env.GOOGLE_AI_API_KEY }));
+    client.registerGenerator(geminiGenerate({ apiKey: process.env.GOOGLE_AI_API_KEY }));
     client.registerTransformProvider(geminiTransform({ apiKey: process.env.GOOGLE_AI_API_KEY }));
-  }
-  // Also register geminiTransform without API key - users can provide their own per-request
-  // This enables the AI Edit node in the Studio even without server-side API key
-  if (!process.env.GOOGLE_AI_API_KEY) {
+  } else {
+    // Register Gemini providers without API key - users provide their own per-request
+    // This enables the AI nodes in the Studio even without server-side API key
+    client.registerGenerator(geminiGenerate());
     client.registerTransformProvider(geminiTransform());
   }
   if (process.env.REPLICATE_API_TOKEN) {

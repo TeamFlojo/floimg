@@ -84,6 +84,10 @@ export interface CloudConfig {
  * Map provider names to AI provider config keys
  */
 const PROVIDER_TO_AI_CONFIG: Record<string, keyof AIProviderConfig> = {
+  // Generator providers
+  "gemini-generate": "gemini",
+  "openai-images": "openai",
+  "stability-ai": "openai", // Stability uses its own key, but we map for consistency
   // Transform providers
   "gemini-transform": "gemini",
   "openai-transform": "openai",
@@ -539,10 +543,18 @@ export function toPipeline(
 
     if (node.type === "generator") {
       const data = node.data as GeneratorNodeData;
+
+      // Inject API key for AI generators if available
+      let params = { ...data.params };
+      const apiKey = getApiKeyForProvider(data.generatorName, aiProviders);
+      if (apiKey && !params.apiKey) {
+        params = { ...params, apiKey };
+      }
+
       steps.push({
         kind: "generate",
         generator: data.generatorName,
-        params: data.params,
+        params,
         out: varName,
       });
     } else if (node.type === "transform") {
