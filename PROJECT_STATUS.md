@@ -1,12 +1,14 @@
 # PROJECT STATUS
 
-**Last Updated**: 2025-12-29
+**Last Updated**: 2025-12-31
 
 ## Current Focus
 
-**T-2025-004**: Add AI Image Editing Node to FloImg Studio (Gemini API)
+**T-2025-005**: AI Workflow Generation from Natural Language
+**T-2025-006**: Multi-Reference Image Support for Gemini Nodes
 
-- Branch: `feat/T-2025-004-studio-ai-editing`
+- Branch: `feat/T-2025-005-studio-ai-workflow`
+- Builds on T-2025-004 Gemini foundation
 
 ## Next Up
 
