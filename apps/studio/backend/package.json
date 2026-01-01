@@ -14,7 +14,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch src/index.ts 2>&1 | tee ../../logs/backend.log",
+    "dev": "tsx watch --env-file=../../../.env src/index.ts 2>&1 | tee ../../logs/backend.log",
     "start": "node dist/index.js",
     "test": "cd ../../.. && pnpm exec vitest --run --project studio",
     "typecheck": "tsc --noEmit"
