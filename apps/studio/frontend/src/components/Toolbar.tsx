@@ -20,6 +20,8 @@ export interface ToolbarProps {
   afterActionsSlot?: ReactNode;
   /** Hide the "by Flojo" attribution link */
   hideAttribution?: boolean;
+  /** Hide the "My Workflows" library toggle button (for cloud wrapper with its own workspace) */
+  hideWorkflowLibrary?: boolean;
 }
 
 export function Toolbar({
@@ -27,6 +29,7 @@ export function Toolbar({
   beforeActionsSlot,
   afterActionsSlot,
   hideAttribution = false,
+  hideWorkflowLibrary = false,
 }: ToolbarProps = {}) {
   const execution = useWorkflowStore((s) => s.execution);
   const execute = useWorkflowStore((s) => s.execute);
@@ -141,21 +144,23 @@ export function Toolbar({
     <>
       <div className="h-14 bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700 flex items-center justify-between px-4">
         <div className="flex items-center gap-4">
-          {/* My Workflows button */}
-          <button
-            onClick={toggleLibrary}
-            className="p-2 text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md"
-            title="My Workflows"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h7"
-              />
-            </svg>
-          </button>
+          {/* My Workflows button - hidden when cloud wrapper provides its own workspace */}
+          {!hideWorkflowLibrary && (
+            <button
+              onClick={toggleLibrary}
+              className="p-2 text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md"
+              title="My Workflows"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h7"
+                />
+              </svg>
+            </button>
+          )}
 
           <div className="flex items-baseline gap-2">
             <h1 className="text-xl font-bold text-gray-800 dark:text-white">FloImg Studio</h1>
