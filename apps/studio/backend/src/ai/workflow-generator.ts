@@ -47,12 +47,13 @@ const WORKFLOW_SCHEMA = {
             type: Type.STRING,
             description: "Human-readable label for display",
           },
-          parameters: {
-            type: Type.OBJECT,
-            description: "Node parameters matching the node type's parameter schema",
+          parametersJson: {
+            type: Type.STRING,
+            description:
+              'Node parameters as a JSON string (e.g., \'{"prompt": "a sunset", "width": 800}\')',
           },
         },
-        required: ["id", "nodeType", "parameters"],
+        required: ["id", "nodeType"],
       },
       description: "Array of nodes in the workflow",
     },
@@ -121,24 +122,28 @@ A workflow consists of:
 2. Nodes must be connected via edges to form a valid data flow
 3. Use node IDs like "node_1", "node_2" etc.
 4. The nodeType must exactly match one from the available list above
-5. Parameters should match what the node type expects
-6. For image generation, prefer AI generators like "generator:dalle-3", "generator:gemini-imagen"
+5. Parameters must be provided as a JSON string in the "parametersJson" field
+6. For image generation, prefer AI generators like "generator:gemini-generate" or "generator:dalle-3"
 7. For transforms, use the correct provider format: "transform:{provider}:{operation}"
+
+## Output Format
+
+For each node, provide:
+- id: unique identifier (e.g., "node_1")
+- nodeType: exact match from available nodes (e.g., "generator:gemini-generate")
+- label: human-readable description
+- parametersJson: JSON string with parameters (e.g., '{"prompt": "a sunset", "width": 800}')
 
 ## Examples
 
 **User**: "Generate an image of a cat and resize it to 800x600"
-**Workflow**:
-- node_1: generator:dalle-3 (prompt: "a cat")
-- node_2: transform:sharp:resize (width: 800, height: 600)
-- edge: node_1 → node_2
 
-**User**: "Take my uploaded image, remove the background, and convert to PNG"
-**Workflow**:
-- node_1: input:upload
-- node_2: transform:stability-transform:removeBackground
-- node_3: transform:sharp:format (format: "png")
-- edges: node_1 → node_2 → node_3
+Response nodes:
+- id: "node_1", nodeType: "generator:gemini-generate", parametersJson: '{"prompt": "a beautiful cat"}'
+- id: "node_2", nodeType: "transform:sharp:resize", parametersJson: '{"width": 800, "height": 600}'
+
+Response edges:
+- source: "node_1", target: "node_2"
 
 Now generate a workflow for the user's request.`;
 }
@@ -233,7 +238,26 @@ export async function generateWorkflow(
       };
     }
 
-    const workflow = JSON.parse(text) as GeneratedWorkflowData;
+    const rawWorkflow = JSON.parse(text) as {
+      nodes: Array<{
+        id: string;
+        nodeType: string;
+        label?: string;
+        parametersJson?: string;
+      }>;
+      edges: GeneratedWorkflowData["edges"];
+    };
+
+    // Transform parametersJson strings to parameters objects
+    const workflow: GeneratedWorkflowData = {
+      nodes: rawWorkflow.nodes.map((node) => ({
+        id: node.id,
+        nodeType: node.nodeType,
+        label: node.label,
+        parameters: node.parametersJson ? JSON.parse(node.parametersJson) : {},
+      })),
+      edges: rawWorkflow.edges,
+    };
 
     // Validate the workflow
     const validation = validateWorkflow(workflow, availableNodes);
