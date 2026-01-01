@@ -142,17 +142,22 @@ Packages in `packages/*` are published to npm as `@teamflojo/*`.
 **CRITICAL**: Use `vX.Y.Z` tags (not `@teamflojo/pkg@X.Y.Z`). The `v*` tag triggers the release workflow.
 
 ```bash
-# 1. Bump version in package.json(s)
-# 2. Commit
+# 1. VERIFY: Check current highest version BEFORE doing anything
+git tag --sort=-v:refname | head -1        # Shows highest git tag
+npm view @teamflojo/floimg version         # Shows npm latest
+# New version MUST be higher than both!
+
+# 2. Bump version in package.json(s) to NEW version
+# 3. Commit
 git commit -m "chore: release vX.Y.Z"
 
-# 3. Create version tag
+# 4. Create version tag (must be HIGHER than step 1)
 git tag vX.Y.Z
 
-# 4. Push (PR for public repo)
+# 5. Push (PR for public repo)
 git push origin main --tags
 
-# 5. Verify BOTH:
+# 6. Verify BOTH:
 #    - GitHub Releases page shows vX.Y.Z
 #    - npm shows new version
 ```
@@ -163,7 +168,10 @@ The `v*` tag triggers `.github/workflows/release.yml` which:
 - Builds and pushes Docker image to ghcr.io
 - Creates GitHub Release with changelog
 
-**Common mistake**: Creating `@teamflojo/floimg@0.6.1` tags does NOT trigger a release. Always use simple `v0.6.1` format.
+**Common mistakes**:
+- Creating `@teamflojo/floimg@0.6.1` tags does NOT trigger a release. Always use simple `v0.6.1` format.
+- Creating a tag with version LOWER than existing (e.g., v0.6.0 when v0.7.1 exists). Always check highest version first!
+- Forgetting to check npm version - git tags and npm can diverge if releases fail.
 
 ## Plugin Development
 
