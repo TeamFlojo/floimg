@@ -125,6 +125,7 @@ A workflow consists of:
 5. Parameters must be provided as a JSON string in the "parametersJson" field
 6. For image generation, prefer AI generators like "generator:gemini-generate" or "generator:dalle-3"
 7. For transforms, use the correct provider format: "transform:{provider}:{operation}"
+8. When a generator receives a dynamic prompt from a text node, use "prePrompt" to add context/instructions that get prepended to the dynamic content
 
 ## Text Node Structured Output
 
@@ -182,14 +183,17 @@ Response edges:
 
 Response nodes:
 - id: "text_1", nodeType: "text:gemini-text", parametersJson: '{"prompt": "Generate three detailed image prompts for a fantasy art series.", "outputFormat": "json", "jsonSchema": {"type": "object", "properties": {"landscape": {"type": "string", "description": "A detailed fantasy landscape prompt"}, "wizard": {"type": "string", "description": "A detailed wizard character prompt"}, "weapon": {"type": "string", "description": "A detailed magical weapon prompt"}}, "required": ["landscape", "wizard", "weapon"]}}'
-- id: "gen_landscape", nodeType: "generator:gemini-generate", label: "Landscape", parametersJson: '{"prompt": "", "aspectRatio": "16:9"}'
-- id: "gen_wizard", nodeType: "generator:gemini-generate", label: "Wizard", parametersJson: '{"prompt": "", "aspectRatio": "1:1"}'
-- id: "gen_weapon", nodeType: "generator:gemini-generate", label: "Weapon", parametersJson: '{"prompt": "", "aspectRatio": "1:1"}'
+- id: "gen_landscape", nodeType: "generator:gemini-generate", label: "Landscape", parametersJson: '{"prompt": "", "prePrompt": "Generate a high-quality fantasy landscape image based on this description:", "aspectRatio": "16:9"}'
+- id: "gen_wizard", nodeType: "generator:gemini-generate", label: "Wizard", parametersJson: '{"prompt": "", "prePrompt": "Generate a detailed character portrait based on this description:", "aspectRatio": "1:1"}'
+- id: "gen_weapon", nodeType: "generator:gemini-generate", label: "Weapon", parametersJson: '{"prompt": "", "prePrompt": "Generate a detailed item illustration based on this description:", "aspectRatio": "1:1"}'
 
 Response edges:
 - source: "text_1", target: "gen_landscape", sourceHandle: "output.landscape", targetHandle: "text"
 - source: "text_1", target: "gen_wizard", sourceHandle: "output.wizard", targetHandle: "text"
 - source: "text_1", target: "gen_weapon", sourceHandle: "output.weapon", targetHandle: "text"
+
+Note: The "prePrompt" parameter provides context/instructions that get prepended to the dynamic prompt.
+When the main "prompt" comes from a text node, prePrompt ensures consistent styling or instructions.
 
 ### Advanced: Multiple reference images combined into one
 **User**: "Generate 3 images and combine them as references for a final composite"
