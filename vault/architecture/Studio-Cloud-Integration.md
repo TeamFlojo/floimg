@@ -1,7 +1,5 @@
 # Cloud Integration
 
-> **See also**: ADR-001 (Pure Open-Source Studio) in floimg-hq vault
-
 FloImg Studio (`apps/studio/`) is a **pure open-source, self-hostable** workflow builder. It contains no cloud-specific code, authentication, or usage limits.
 
 ## Architecture Principle
