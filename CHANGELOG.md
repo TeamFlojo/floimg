@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No unreleased changes._
 
+## [v0.9.2] - 2026-01-04
+
+### @teamflojo/floimg-templates (0.1.0)
+
+- fix: actually publish to npm (was missing from release workflow in v0.9.1)
+- docs: clean up OSS documentation (remove internal acronyms)
+
+### @teamflojo/floimg-studio-ui (0.3.2)
+
+- fix: use workspace dependency for floimg-studio-shared (was pulling outdated npm version)
+
+### Repository
+
+- chore: add floimg-templates to release workflow
+- docs: improve OSS boundaries in templates package documentation
+
 ## [v0.9.1] - 2026-01-04
 
 ### @teamflojo/floimg-templates (0.1.0) - NEW
