@@ -4,6 +4,14 @@
 
 ## Current Focus
 
+**BUG-2026-003: Fix stale peer dependencies** (in_progress)
+
+- 12 plugin packages have peer deps on `@teamflojo/floimg@^0.2.0` instead of `^0.8.0`
+- Causes npm install failures for users
+- Branch: `fix/BUG-2026-003-peer-deps`
+
+---
+
 **T-2025-007: Gemini 3 Pro Workflow Generation** (PR #64 ready for merge)
 
 Natural language to workflow JSON using Gemini 3 Pro structured outputs.

@@ -1,8 +1,9 @@
 ---
 tags: [type/bug, area/packages]
-status: backlog
+status: in_progress
 priority: p1
 created: 2026-01-04
+branch: fix/BUG-2026-003-peer-deps
 ---
 
 # Bug: Plugin packages have stale peer dependencies causing install failures
@@ -10,7 +11,7 @@ created: 2026-01-04
 ## Bug Details
 
 **Bug ID**: BUG-2026-003
-**Status**: backlog
+**Status**: in_progress
 **Priority**: p1
 **Created**: 2026-01-04
 
@@ -40,21 +41,22 @@ Plugin packages should install cleanly alongside the current floimg version.
 
 npm refuses to install due to peer dependency mismatch. Users must use `--legacy-peer-deps` workaround.
 
-## Affected Packages
+## Affected Packages (12 total, all confirmed)
 
-Need to audit all plugin packages:
+All have peer dep `@teamflojo/floimg@^0.2.0` (or `^0.4.0` for claude), need `^0.8.0`:
 
-- [ ] `@teamflojo/floimg-mermaid` - confirmed affected
-- [ ] `@teamflojo/floimg-qr` - likely affected
-- [ ] `@teamflojo/floimg-quickchart` - check
-- [ ] `@teamflojo/floimg-d3` - check
-- [ ] `@teamflojo/floimg-screenshot` - check
-- [ ] `@teamflojo/floimg-openai` - check
-- [ ] `@teamflojo/floimg-stability` - check
-- [ ] `@teamflojo/floimg-google` - check
-- [ ] `@teamflojo/floimg-replicate` - check
-- [ ] `@teamflojo/floimg-ollama` - check
-- [ ] `@teamflojo/floimg-xai` - check
+- [ ] `@teamflojo/floimg-mermaid` (0.2.1 → 0.2.2)
+- [ ] `@teamflojo/floimg-qr` (0.2.1 → 0.2.2)
+- [ ] `@teamflojo/floimg-quickchart` (0.2.1 → 0.2.2)
+- [ ] `@teamflojo/floimg-d3` (0.2.1 → 0.2.2)
+- [ ] `@teamflojo/floimg-screenshot` (0.2.1 → 0.2.2)
+- [ ] `@teamflojo/floimg-openai` (0.2.0 → 0.2.1)
+- [ ] `@teamflojo/floimg-stability` (0.2.1 → 0.2.2)
+- [ ] `@teamflojo/floimg-google` (0.4.0 → 0.4.1)
+- [ ] `@teamflojo/floimg-replicate` (0.1.0 → 0.1.1)
+- [ ] `@teamflojo/floimg-ollama` (0.2.1 → 0.2.2)
+- [ ] `@teamflojo/floimg-xai` (0.1.0 → 0.1.1)
+- [ ] `@teamflojo/floimg-claude` (0.2.0 → 0.2.1)
 
 ## Fix
 
