@@ -1,6 +1,6 @@
 {
   "name": "@teamflojo/floimg-stability",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Stability AI image generation plugin for floimg (SDXL, SD3)",
   "type": "module",
   "main": "./dist/index.js",
@@ -41,7 +41,7 @@
     "directory": "packages/floimg-stability"
   },
   "peerDependencies": {
-    "@teamflojo/floimg": "^0.2.0"
+    "@teamflojo/floimg": "^0.8.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

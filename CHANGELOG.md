@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No unreleased changes._
 
+## [v0.9.6] - 2026-01-04
+
+### All Plugin Packages
+
+- fix: update peer dependency on `@teamflojo/floimg` from `^0.2.0` to `^0.8.0`
+  - Fixes npm install failures due to peer dependency conflicts
+  - Users no longer need `--legacy-peer-deps` flag
+
+#### Updated Packages
+
+| Package                      | Version |
+| ---------------------------- | ------- |
+| @teamflojo/floimg-mermaid    | 0.2.2   |
+| @teamflojo/floimg-qr         | 0.2.2   |
+| @teamflojo/floimg-quickchart | 0.2.2   |
+| @teamflojo/floimg-d3         | 0.2.2   |
+| @teamflojo/floimg-screenshot | 0.2.2   |
+| @teamflojo/floimg-openai     | 0.2.1   |
+| @teamflojo/floimg-stability  | 0.2.2   |
+| @teamflojo/floimg-google     | 0.4.1   |
+| @teamflojo/floimg-replicate  | 0.1.1   |
+| @teamflojo/floimg-ollama     | 0.2.2   |
+| @teamflojo/floimg-xai        | 0.1.1   |
+| @teamflojo/floimg-claude     | 0.2.1   |
+
 ## [v0.9.5] - 2026-01-04
 
 ### @teamflojo/floimg-studio-ui (0.3.3)
