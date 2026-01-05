@@ -1,6 +1,6 @@
 {
   "name": "@teamflojo/floimg-xai",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "xAI Grok text and vision providers for floimg",
   "type": "module",
   "main": "./dist/index.js",
@@ -40,7 +40,7 @@
     "directory": "packages/floimg-xai"
   },
   "peerDependencies": {
-    "@teamflojo/floimg": "^0.2.0"
+    "@teamflojo/floimg": "^0.8.0"
   },
   "dependencies": {
     "openai": "^4.76.0"

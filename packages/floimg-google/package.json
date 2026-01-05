@@ -1,6 +1,6 @@
 {
   "name": "@teamflojo/floimg-google",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Google Imagen image generation plugin for floimg",
   "type": "module",
   "main": "./dist/index.js",
@@ -40,7 +40,7 @@
     "directory": "packages/floimg-google"
   },
   "peerDependencies": {
-    "@teamflojo/floimg": "^0.2.0"
+    "@teamflojo/floimg": "^0.8.0"
   },
   "dependencies": {
     "@google/genai": "^0.7.0"

@@ -1,6 +1,6 @@
 {
   "name": "@teamflojo/floimg-openai",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "OpenAI image generation, vision, and text providers for floimg",
   "type": "module",
   "main": "./dist/index.js",
@@ -41,7 +41,7 @@
     "directory": "packages/floimg-openai"
   },
   "peerDependencies": {
-    "@teamflojo/floimg": "^0.2.0"
+    "@teamflojo/floimg": "^0.8.0"
   },
   "dependencies": {
     "openai": "^4.76.0"
