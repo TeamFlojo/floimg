@@ -398,20 +398,40 @@ export function geminiVision(config: GeminiVisionConfig = {}): VisionProvider {
         generationConfig.responseMimeType = "application/json";
       }
 
+      // Build parts array with primary image and any additional images
+      const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+        { text: fullPrompt },
+        {
+          inlineData: {
+            mimeType: input.mime,
+            data: base64Image,
+          },
+        },
+      ];
+
+      // Add additional images if provided (for multi-image analysis like iterative workflows)
+      const additionalImages = (params as Record<string, unknown>)._additionalImages as
+        | Array<{ bytes: Buffer; mime: string }>
+        | undefined;
+      if (additionalImages && Array.isArray(additionalImages)) {
+        for (const img of additionalImages) {
+          if (img.bytes && img.mime) {
+            parts.push({
+              inlineData: {
+                mimeType: img.mime,
+                data: img.bytes.toString("base64"),
+              },
+            });
+          }
+        }
+      }
+
       const response = await client.models.generateContent({
         model,
         contents: [
           {
             role: "user",
-            parts: [
-              { text: fullPrompt },
-              {
-                inlineData: {
-                  mimeType: input.mime,
-                  data: base64Image,
-                },
-              },
-            ],
+            parts,
           },
         ],
         config: generationConfig,
