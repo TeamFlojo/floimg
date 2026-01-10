@@ -774,6 +774,59 @@ export async function executeWorkflow(
         // Store winner and context in variables
         if (winnerValue) {
           stepVariables[routerStep.out] = winnerValue as ImageBlob;
+
+          // If winner is an ImageBlob, save it and fire callback with preview
+          if (isImageBlob(winnerValue) && stepNodeId) {
+            const blob = winnerValue;
+            const node = nodes.find((n) => n.id === stepNodeId);
+
+            if (node) {
+              // Save the winning image to disk
+              const imageId = `img_${Date.now()}_${nanoid(6)}`;
+              const ext = MIME_TO_EXT[blob.mime] || "png";
+              const filename = `${imageId}.${ext}`;
+              const imagePath = join(OUTPUT_DIR, filename);
+
+              await mkdir(dirname(imagePath), { recursive: true });
+              await writeFile(imagePath, blob.bytes);
+
+              // Write metadata sidecar file
+              const metadata: ImageMetadata = {
+                id: imageId,
+                filename,
+                mime: blob.mime,
+                size: blob.bytes.length,
+                createdAt: Date.now(),
+                workflow: {
+                  nodes,
+                  edges,
+                  executedAt: Date.now(),
+                  templateId,
+                },
+              };
+              const metadataPath = join(OUTPUT_DIR, `${imageId}.meta.json`);
+              await writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+
+              imageIds.push(imageId);
+              images.set(imageId, blob.bytes);
+              nodeIdByImageId.set(imageId, node.id);
+
+              // Build preview and fire completed callback
+              const previewMime = blob.mime || "image/png";
+              const preview = `data:${previewMime};base64,${blob.bytes.toString("base64")}`;
+
+              callbacks?.onStep?.({
+                stepIndex: i,
+                nodeId: stepNodeId,
+                status: "completed",
+                imageId,
+                preview,
+              });
+
+              results.push({ step, value: winnerValue, out: routerStep.out, nodeId: stepNodeId });
+              continue;
+            }
+          }
         }
         if (contextValue) {
           stepVariables[`${routerStep.out}_context`] = contextValue as unknown as ImageBlob;
@@ -787,6 +840,81 @@ export async function executeWorkflow(
 
         results.push({ step, value: winnerValue, out: routerStep.out, nodeId: stepNodeId });
         continue;
+      }
+
+      // Special handling for vision steps with array input (from collect)
+      if (step.kind === "vision" && step.in) {
+        const inputValue = stepVariables[step.in];
+        if (Array.isArray(inputValue)) {
+          // Input is an array of images from collect - pass all images via params
+          const imageBlobs = inputValue.filter((v) => isImageBlob(v)) as ImageBlob[];
+          if (imageBlobs.length > 0) {
+            // Use first image as primary, rest as additional
+            const primaryImage = imageBlobs[0];
+            const additionalImages = imageBlobs.slice(1);
+
+            // Clone params and add additional images
+            const visionParams = {
+              ...step.params,
+              _additionalImages: additionalImages,
+            };
+
+            // Create modified step with first image as input
+            const modifiedStepVariables = {
+              ...stepVariables,
+              [step.in]: primaryImage,
+            };
+
+            const singlePipeline: Pipeline = {
+              name: "Single Step",
+              steps: [{ ...step, params: visionParams }] as Pipeline["steps"],
+              initialVariables: modifiedStepVariables,
+            };
+
+            const singleResults = await client.run(singlePipeline);
+
+            if (singleResults.length > 0) {
+              const singleResult = singleResults[0];
+              if (stepOut) {
+                stepVariables[stepOut] = singleResult.value as ImageBlob;
+              }
+
+              // Store parsed data for router to access
+              if (stepOut && isDataBlob(singleResult.value) && singleResult.value.parsed) {
+                stepVariables[`${stepOut}_parsed`] = singleResult.value
+                  .parsed as unknown as ImageBlob;
+                // Also store the raw DataBlob for direct access
+                stepVariables[stepOut] = singleResult.value.parsed as unknown as ImageBlob;
+              }
+
+              if (stepNodeId && isDataBlob(singleResult.value)) {
+                dataOutputs.set(stepNodeId, {
+                  kind: "data",
+                  dataType: singleResult.value.type,
+                  content: singleResult.value.content,
+                  parsed: singleResult.value.parsed,
+                });
+
+                callbacks?.onStep?.({
+                  stepIndex: i,
+                  nodeId: stepNodeId,
+                  status: "completed",
+                  dataType: singleResult.value.type,
+                  content: singleResult.value.content,
+                  parsed: singleResult.value.parsed,
+                });
+              }
+
+              results.push({
+                step,
+                value: singleResult.value,
+                out: stepOut || "",
+                nodeId: stepNodeId,
+              });
+            }
+            continue;
+          }
+        }
       }
 
       // Execute single step (existing logic for generator, transform, etc.)
