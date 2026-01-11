@@ -5,6 +5,17 @@ All notable changes to FloImg will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.15.2] - 2026-01-11
+
+### @teamflojo/floimg-studio-ui (0.5.1)
+
+- feat: export keyboard shortcuts components and hooks for library consumers
+  - Export `CommandPalette`, `KeyboardShortcutsModal` components
+  - Export `useKeyboardShortcuts` hook
+  - Export `useSettingsStore` for shortcut customization
+  - Export `SHORTCUT_DEFINITIONS`, `CATEGORY_NAMES` constants
+  - Export keyboard types
+
 ## [v0.15.1] - 2026-01-11
 
 ### @teamflojo/floimg (0.13.1)
