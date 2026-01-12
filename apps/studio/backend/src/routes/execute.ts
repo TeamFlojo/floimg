@@ -4,10 +4,34 @@ import type {
   StudioEdge,
   ExecutionStepResult,
   ExecutionSSEEvent,
+  ErrorCategory,
 } from "@teamflojo/floimg-studio-shared";
 import { executeWorkflow, toPipeline } from "../floimg/executor.js";
 import { stringify as yamlStringify } from "yaml";
 import { nanoid } from "nanoid";
+import { FloimgError } from "@teamflojo/floimg";
+
+// Helper to extract structured error info from any error
+// Note: ErrorCategory from @teamflojo/floimg and @teamflojo/floimg-studio-shared
+// are identical string literal unions, so TypeScript treats them as compatible
+function extractErrorInfo(error: unknown): {
+  message: string;
+  code?: string;
+  category?: ErrorCategory;
+  retryable?: boolean;
+} {
+  if (error instanceof FloimgError) {
+    return {
+      message: error.message,
+      code: error.code,
+      category: error.category,
+      retryable: error.retryable,
+    };
+  }
+  return {
+    message: error instanceof Error ? error.message : String(error),
+  };
+}
 
 // Helper to send SSE event
 function sendSSE(raw: { write: (data: string) => boolean }, event: ExecutionSSEEvent): void {
@@ -148,10 +172,14 @@ export async function executeRoutes(fastify: FastifyInstance) {
         usageEvents: result.usageEvents,
       };
     } catch (error) {
+      const errorInfo = extractErrorInfo(error);
       reply.code(500);
       return {
         status: "error",
-        error: error instanceof Error ? error.message : String(error),
+        error: errorInfo.message,
+        errorCode: errorInfo.code,
+        errorCategory: errorInfo.category,
+        retryable: errorInfo.retryable,
       };
     }
   });
@@ -216,9 +244,15 @@ export async function executeRoutes(fastify: FastifyInstance) {
       // All step events were sent via callbacks during execution
       // Completion event was sent via onComplete callback
     } catch (error) {
+      const errorInfo = extractErrorInfo(error);
       sendSSE(reply.raw, {
         type: "execution.error",
-        data: { error: error instanceof Error ? error.message : String(error) },
+        data: {
+          error: errorInfo.message,
+          errorCode: errorInfo.code,
+          errorCategory: errorInfo.category,
+          retryable: errorInfo.retryable,
+        },
       });
     } finally {
       reply.raw.end();

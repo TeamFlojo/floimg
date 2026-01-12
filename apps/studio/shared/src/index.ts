@@ -605,8 +605,34 @@ export interface ExecutionSSEError {
   data: {
     error: string;
     nodeId?: string;
+    /** Machine-readable error code (e.g., "GENERATION_ERROR", "NETWORK_ERROR") */
+    errorCode?: string;
+    /** Error category for handling strategies */
+    errorCategory?: ErrorCategory;
+    /** Whether the operation can be retried */
+    retryable?: boolean;
   };
 }
+
+/**
+ * Error categories for classification and handling strategies.
+ *
+ * - user_input: Invalid user-provided values (bad params, missing fields)
+ * - provider_error: External API failures (rate limit, timeout, service down)
+ * - provider_config: Missing/invalid credentials or configuration
+ * - validation: Pre-execution validation failures (circular deps, missing inputs)
+ * - execution: Runtime failures during image processing
+ * - network: Connectivity issues reaching providers
+ * - internal: Unexpected internal errors (bugs)
+ */
+export type ErrorCategory =
+  | "user_input"
+  | "provider_error"
+  | "provider_config"
+  | "validation"
+  | "execution"
+  | "network"
+  | "internal";
 
 export type ExecutionSSEEvent =
   | ExecutionSSEStarted
