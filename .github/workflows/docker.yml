@@ -40,3 +40,10 @@ jobs:
             ghcr.io/flojoinc/floimg-studio:main-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Trigger FSC redeploy
+        if: success()
+        run: |
+          curl -X GET \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_WEBHOOK_TOKEN }}" \
+            "https://coolify.goflojo.com/api/v1/deploy?uuid=ogcg4wkwgs80c4sos8ggoooo&force=false"
