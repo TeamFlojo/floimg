@@ -27,9 +27,9 @@ Cannot read properties of undefined (reading 'bytes')
 
 The composite node should gracefully handle undefined inputs:
 
-1. Skip undefined images instead of crashing
-2. Provide a clear error message indicating which input failed
-3. Allow partial success if some inputs are valid
+1. Fail fast with clear error message (consistent with other transforms)
+2. Identify which specific input(s) failed
+3. Never crash with cryptic "undefined" errors
 
 ## Root Cause
 
@@ -47,15 +47,17 @@ The composite transform assumes all input images are valid and tries to access `
 Added validation in `packages/floimg/src/providers/transform/sharp.ts`:
 
 - Base image validation: throws clear error if base is missing
-- Overlay filtering: skips invalid overlays, allows partial success
-- Descriptive errors: identifies which overlay indices failed
-- If all overlays invalid, throws error with indices list
+- Overlay validation: fails fast if ANY overlay is invalid (consistent with other transforms)
+- Descriptive errors: identifies which overlay indices are invalid
+- Empty overlays array returns base unchanged
+
+This follows the **fail-fast** pattern used by all other transforms, ensuring end-to-end consistency across SDK/Studio/CLI/MCP.
 
 ## Acceptance Criteria
 
 - [x] Composite handles undefined inputs without crashing
 - [x] Error message identifies which input was undefined
-- [x] Partial success allowed when some overlays are valid
+- [x] Behavior is consistent with other transforms (fail-fast)
 
 ## Related
 

@@ -594,34 +594,31 @@ export class SharpTransformProvider implements TransformProvider {
     try {
       // Validate base image
       if (!base?.bytes) {
-        throw new TransformError("Composite failed: base image is missing or invalid");
+        throw new TransformError("Base image is required for composite operation");
       }
 
-      // Filter out invalid overlays, tracking which ones failed
+      // Validate all overlays - fail fast if any are invalid (consistent with other transforms)
       const invalidIndices: number[] = [];
-      const validOverlays = overlays.filter((overlay, index) => {
-        if (!overlay?.blob?.bytes) {
-          invalidIndices.push(index);
-          return false;
+      for (let i = 0; i < overlays.length; i++) {
+        if (!overlays[i]?.blob?.bytes) {
+          invalidIndices.push(i);
         }
-        return true;
-      });
+      }
 
-      // If all overlays are invalid, throw descriptive error
-      if (validOverlays.length === 0 && overlays.length > 0) {
+      if (invalidIndices.length > 0) {
         throw new TransformError(
-          `Composite failed: all ${overlays.length} overlay image(s) are missing or invalid (indices: ${invalidIndices.join(", ")})`
+          `Overlay image(s) at index ${invalidIndices.join(", ")} missing or invalid`
         );
       }
 
-      // If no overlays at all, just return the base
-      if (validOverlays.length === 0) {
+      // If no overlays, return base unchanged
+      if (overlays.length === 0) {
         return base;
       }
 
       let baseInstance = sharp(base.bytes);
 
-      const compositeInputs = validOverlays.map((overlay) => ({
+      const compositeInputs = overlays.map((overlay) => ({
         input: overlay.blob.bytes,
         left: overlay.left,
         top: overlay.top,
