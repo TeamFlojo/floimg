@@ -1,7 +1,7 @@
 ---
 id: T-2026-019
 title: Sync monorepo version with git tags
-status: in_progress
+status: completed
 priority: p2
 created: 2026-01-16
 ---
