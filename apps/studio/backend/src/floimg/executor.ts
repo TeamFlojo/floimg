@@ -24,7 +24,7 @@ import type {
   ExecutionStepResult,
   ImageMetadata,
 } from "@teamflojo/floimg-studio-shared";
-import type { ImageBlob, Pipeline, UsageEvent } from "@teamflojo/floimg";
+import type { ImageBlob, DataBlob, Pipeline, UsageEvent } from "@teamflojo/floimg";
 import { isImageBlob, isDataBlob } from "@teamflojo/floimg";
 import { loadUpload } from "../routes/uploads.js";
 import { nanoid } from "nanoid";
@@ -101,8 +101,8 @@ interface DataOutput {
 export interface ExecutionCallbacks {
   onStep?: (result: ExecutionStepResult) => void;
   onComplete?: (imageIds: string[]) => void;
-  /** Called when execution fails. nodeId is the node being executed when the error occurred. */
-  onError?: (error: string, nodeId?: string) => void;
+  /** Called when execution fails. id is the step identifier when the error occurred. */
+  onError?: (error: string, id?: string) => void;
 }
 
 // AI provider configuration from frontend
@@ -183,10 +183,232 @@ export interface ExecutionOptions {
 export interface ExecutionResult {
   imageIds: string[];
   images: Map<string, Buffer>;
-  nodeIdByImageId: Map<string, string>;
+  idByImageId: Map<string, string>;
   dataOutputs: Map<string, DataOutput>;
   /** Usage events collected from AI providers during execution */
   usageEvents: UsageEvent[];
+}
+
+/**
+ * Result from executing a Pipeline directly (simpler than ExecutionResult)
+ * Used by external API callers who send Pipeline format
+ */
+export interface PipelineExecutionResult {
+  imageIds: string[];
+  images: Map<string, Buffer>;
+  dataOutputs: Map<string, { dataType: "text" | "json"; content: string; parsed?: unknown }>;
+  usageEvents: UsageEvent[];
+}
+
+/**
+ * Callbacks for pipeline execution progress
+ */
+export interface PipelineExecutionCallbacks {
+  /** Called when a step starts or completes */
+  onStep?: (result: ExecutionStepResult) => void;
+  /** Called when execution fails. id is the step identifier when the error occurred. */
+  onError?: (error: string, id?: string) => void;
+}
+
+/**
+ * Options for direct pipeline execution
+ */
+export interface PipelineExecutionOptions {
+  /** AI provider configurations (API keys, base URLs) */
+  aiProviders?: AIProviderConfig;
+  /** Cloud config for FloImg Cloud save functionality */
+  cloudConfig?: CloudConfig;
+  /** Callbacks for execution progress */
+  callbacks?: PipelineExecutionCallbacks;
+}
+
+/**
+ * Execute a Pipeline directly (for API callers using the canonical format)
+ *
+ * This is the preferred path for external API users. Unlike executeWorkflow(),
+ * this function accepts the canonical Pipeline format directly and doesn't
+ * require conversion from the visual editor's nodes/edges format.
+ *
+ * @param pipeline - The Pipeline to execute (canonical format)
+ * @param options - Execution options (AI providers, cloud config, callbacks)
+ * @returns Execution result with images and data outputs
+ */
+export async function executePipeline(
+  pipeline: Pipeline,
+  options?: PipelineExecutionOptions
+): Promise<PipelineExecutionResult> {
+  const { cloudConfig, callbacks } = options || {};
+  let currentStepId: string | undefined;
+
+  try {
+    const imageIds: string[] = [];
+    const images = new Map<string, Buffer>();
+    const dataOutputs = new Map<
+      string,
+      { dataType: "text" | "json"; content: string; parsed?: unknown }
+    >();
+
+    // Get the shared floimg client
+    const client = getClient();
+
+    // Dynamically register CloudSaveProvider when running in cloud context
+    if (cloudConfig?.enabled) {
+      const { CloudSaveProvider } = await import("./providers/CloudSaveProvider.js");
+      const provider = new CloudSaveProvider(
+        cloudConfig.userId,
+        cloudConfig.apiBaseUrl,
+        cloudConfig.authToken
+      );
+      client.registerSaveProvider(provider);
+    }
+
+    // Clear any previously collected usage events before this execution
+    clearCollectedUsageEvents();
+
+    // Build intermediate variable storage for step-by-step execution
+    // Store both ImageBlob and DataBlob values during execution
+    const stepVariables: Record<string, ImageBlob | DataBlob> = { ...pipeline.initialVariables };
+
+    // Execute steps one-by-one to provide real-time progress
+    for (let i = 0; i < pipeline.steps.length; i++) {
+      const step = pipeline.steps[i];
+      // Get step identifier (the 'out' variable name)
+      const stepId = getStepId(step);
+      currentStepId = stepId;
+
+      // Notify step is starting
+      if (stepId && callbacks?.onStep) {
+        callbacks.onStep({
+          stepIndex: i,
+          id: stepId,
+          status: "running",
+        });
+      }
+
+      // Create a single-step pipeline with current variables
+      // Include both ImageBlob and DataBlob for dependent steps
+      const pipelineVariables: Record<string, ImageBlob | DataBlob> = {};
+      for (const [key, value] of Object.entries(stepVariables)) {
+        if (isImageBlob(value) || isDataBlob(value)) {
+          pipelineVariables[key] = value;
+        }
+      }
+      const singlePipeline: Pipeline = {
+        name: "Single Step",
+        steps: [step],
+        initialVariables: pipelineVariables,
+      };
+
+      try {
+        // Execute the single step
+        const stepResults = await client.run(singlePipeline);
+
+        // Process step results
+        for (const result of stepResults) {
+          if (isImageBlob(result.value)) {
+            // Store for dependent steps
+            if (result.out) {
+              stepVariables[result.out] = result.value;
+            }
+
+            const imageId = nanoid();
+            const buffer = Buffer.from(result.value.bytes);
+            imageIds.push(imageId);
+            images.set(imageId, buffer);
+
+            // Save image to disk
+            const ext = MIME_TO_EXT[result.value.mime] || "png";
+            const filename = `${imageId}.${ext}`;
+            const filepath = join(OUTPUT_DIR, filename);
+            await mkdir(dirname(filepath), { recursive: true });
+            await writeFile(filepath, buffer);
+
+            // Notify step completed with image preview
+            if (stepId && callbacks?.onStep) {
+              const previewMime = result.value.mime || "image/png";
+              const preview = `data:${previewMime};base64,${buffer.toString("base64")}`;
+              callbacks.onStep({
+                stepIndex: i,
+                id: stepId,
+                status: "completed",
+                imageId,
+                preview,
+              });
+            }
+          } else if (isDataBlob(result.value)) {
+            // Store for dependent steps (text/vision output)
+            if (result.out) {
+              stepVariables[result.out] = result.value;
+            }
+
+            // Store data outputs
+            dataOutputs.set(result.out, {
+              dataType: result.value.type,
+              content: result.value.content,
+              parsed: result.value.parsed,
+            });
+
+            // Notify step completed with data output
+            if (stepId && callbacks?.onStep) {
+              callbacks.onStep({
+                stepIndex: i,
+                id: stepId,
+                status: "completed",
+                dataType: result.value.type,
+                content: result.value.content,
+                parsed: result.value.parsed,
+              });
+            }
+          } else if (stepId && callbacks?.onStep) {
+            // Step completed without specific output (e.g., save step)
+            callbacks.onStep({
+              stepIndex: i,
+              id: stepId,
+              status: "completed",
+            });
+          }
+        }
+      } catch (stepError) {
+        // Fire error callback for this specific step
+        if (stepId && callbacks?.onStep) {
+          callbacks.onStep({
+            stepIndex: i,
+            id: stepId,
+            status: "error",
+            error: stepError instanceof Error ? stepError.message : String(stepError),
+          });
+        }
+        throw stepError; // Re-throw for outer catch
+      }
+    }
+
+    // Get usage events collected during execution
+    const usageEvents = getCollectedUsageEvents();
+
+    return {
+      imageIds,
+      images,
+      dataOutputs,
+      usageEvents,
+    };
+  } catch (error) {
+    callbacks?.onError?.(error instanceof Error ? error.message : String(error), currentStepId);
+    throw error;
+  }
+}
+
+/**
+ * Get step identifier from a pipeline step
+ * Returns the 'out' variable name, or first output for fan-out steps
+ */
+function getStepId(step: Pipeline["steps"][number]): string | undefined {
+  if (step.kind === "fan-out") {
+    return step.out[0]; // Return first branch variable
+  }
+  if (step.kind === "save") {
+    return undefined; // Save steps don't have output
+  }
+  return step.out;
 }
 
 /**
@@ -226,11 +448,11 @@ export async function executeWorkflow(
   const { templateId, callbacks, cloudConfig } = options || {};
   const imageIds: string[] = [];
   const images = new Map<string, Buffer>();
-  const nodeIdByImageId = new Map<string, string>();
+  const idByImageId = new Map<string, string>();
   const dataOutputs = new Map<string, DataOutput>();
 
   // Track current node being executed (for error reporting)
-  let currentNodeId: string | undefined;
+  let currentStepId: string | undefined;
 
   // Get the shared floimg client
   const client = getClient();
@@ -262,7 +484,7 @@ export async function executeWorkflow(
 
       callbacks?.onStep?.({
         stepIndex: 0,
-        nodeId: inputNode.id,
+        id: inputNode.id,
         status: "running",
       });
     }
@@ -286,7 +508,7 @@ export async function executeWorkflow(
 
         callbacks?.onStep?.({
           stepIndex: 0,
-          nodeId: inputNode.id,
+          id: inputNode.id,
           status: "completed",
         });
       }
@@ -362,7 +584,7 @@ export async function executeWorkflow(
           if (textNodeId) {
             callbacks?.onStep?.({
               stepIndex: 0,
-              nodeId: textNodeId,
+              id: textNodeId,
               status: "running",
             });
           }
@@ -392,7 +614,7 @@ export async function executeWorkflow(
 
               callbacks?.onStep?.({
                 stepIndex: 0,
-                nodeId: textNodeId,
+                id: textNodeId,
                 status: "completed",
                 dataType: result.value.type,
                 content: result.value.content,
@@ -665,7 +887,7 @@ export async function executeWorkflow(
       step: Pipeline["steps"][number];
       value: unknown;
       out: string;
-      nodeId?: string;
+      id?: string;
     };
     const results: StepResult[] = [];
 
@@ -687,7 +909,7 @@ export async function executeWorkflow(
         if (stepNodeId) {
           callbacks?.onStep?.({
             stepIndex: i,
-            nodeId: stepNodeId,
+            id: stepNodeId,
             status: "skipped",
             skipReason: "Upstream step failed or was blocked by content moderation",
           });
@@ -696,13 +918,13 @@ export async function executeWorkflow(
       }
 
       // Track current node for error reporting
-      currentNodeId = stepNodeId;
+      currentStepId = stepNodeId;
 
       // Notify step is running
       if (stepNodeId) {
         callbacks?.onStep?.({
           stepIndex: i,
-          nodeId: stepNodeId,
+          id: stepNodeId,
           status: "running",
         });
       }
@@ -741,7 +963,7 @@ export async function executeWorkflow(
         for (let branchIdx = 0; branchIdx < branchCount; branchIdx++) {
           callbacks?.onStep?.({
             stepIndex: i,
-            nodeId: stepNodeId!,
+            id: stepNodeId!,
             status: "completed",
             branchId: fanoutStep.out[branchIdx],
             branchIndex: branchIdx,
@@ -753,7 +975,7 @@ export async function executeWorkflow(
           step,
           value: fanoutResults.map((r) => r.value),
           out: fanoutStep.out[0],
-          nodeId: stepNodeId,
+          id: stepNodeId,
         });
         continue;
       }
@@ -782,7 +1004,7 @@ export async function executeWorkflow(
 
         callbacks?.onStep?.({
           stepIndex: i,
-          nodeId: stepNodeId!,
+          id: stepNodeId!,
           status: "completed",
         });
 
@@ -790,7 +1012,7 @@ export async function executeWorkflow(
           step,
           value: collectResults[0]?.value,
           out: collectStep.out,
-          nodeId: stepNodeId,
+          id: stepNodeId,
         });
         continue;
       }
@@ -854,7 +1076,7 @@ export async function executeWorkflow(
 
               imageIds.push(imageId);
               images.set(imageId, blob.bytes);
-              nodeIdByImageId.set(imageId, node.id);
+              idByImageId.set(imageId, node.id);
 
               // Build preview and fire completed callback
               const previewMime = blob.mime || "image/png";
@@ -862,13 +1084,13 @@ export async function executeWorkflow(
 
               callbacks?.onStep?.({
                 stepIndex: i,
-                nodeId: stepNodeId,
+                id: stepNodeId,
                 status: "completed",
                 imageId,
                 preview,
               });
 
-              results.push({ step, value: winnerValue, out: routerStep.out, nodeId: stepNodeId });
+              results.push({ step, value: winnerValue, out: routerStep.out, id: stepNodeId });
               continue;
             }
           }
@@ -876,11 +1098,11 @@ export async function executeWorkflow(
 
         callbacks?.onStep?.({
           stepIndex: i,
-          nodeId: stepNodeId!,
+          id: stepNodeId!,
           status: "completed",
         });
 
-        results.push({ step, value: winnerValue, out: routerStep.out, nodeId: stepNodeId });
+        results.push({ step, value: winnerValue, out: routerStep.out, id: stepNodeId });
         continue;
       }
 
@@ -939,7 +1161,7 @@ export async function executeWorkflow(
 
                 callbacks?.onStep?.({
                   stepIndex: i,
-                  nodeId: stepNodeId,
+                  id: stepNodeId,
                   status: "completed",
                   dataType: singleResult.value.type,
                   content: singleResult.value.content,
@@ -951,7 +1173,7 @@ export async function executeWorkflow(
                 step,
                 value: singleResult.value,
                 out: stepOut || "",
-                nodeId: stepNodeId,
+                id: stepNodeId,
               });
             }
             continue;
@@ -1039,7 +1261,7 @@ export async function executeWorkflow(
                 const moderationResult = await moderateImage(blob.bytes, blob.mime);
                 if (moderationResult.flagged) {
                   await logModerationIncident("generated", moderationResult, {
-                    nodeId: node.id,
+                    id: node.id,
                     nodeType: node.type,
                   });
                   // Track this output var as failed so dependent steps can be skipped
@@ -1048,7 +1270,7 @@ export async function executeWorkflow(
                   }
                   callbacks?.onStep?.({
                     stepIndex: i,
-                    nodeId: stepNodeId,
+                    id: stepNodeId,
                     status: "error",
                     error: `Content policy violation: Image flagged for ${moderationResult.flaggedCategories.join(", ")}`,
                   });
@@ -1073,7 +1295,7 @@ export async function executeWorkflow(
                       flaggedCategories: ["moderation_service_error"],
                     },
                     {
-                      nodeId: node.id,
+                      id: node.id,
                       nodeType: node.type,
                       error: String(moderationError),
                     }
@@ -1114,7 +1336,7 @@ export async function executeWorkflow(
 
             imageIds.push(imageId);
             images.set(imageId, blob.bytes);
-            nodeIdByImageId.set(imageId, node.id);
+            idByImageId.set(imageId, node.id);
 
             // Build preview and fire completed callback immediately
             const previewMime = blob.mime || "image/png";
@@ -1122,7 +1344,7 @@ export async function executeWorkflow(
 
             callbacks?.onStep?.({
               stepIndex: i,
-              nodeId: stepNodeId,
+              id: stepNodeId,
               status: "completed",
               imageId,
               preview,
@@ -1151,7 +1373,7 @@ export async function executeWorkflow(
 
           callbacks?.onStep?.({
             stepIndex: i,
-            nodeId: stepNodeId,
+            id: stepNodeId,
             status: "completed",
             dataType: dataBlob.type,
             content: dataBlob.content,
@@ -1159,22 +1381,22 @@ export async function executeWorkflow(
           });
         }
 
-        results.push({ step, value: singleResult.value, out: stepOut || "", nodeId: stepNodeId });
+        results.push({ step, value: singleResult.value, out: stepOut || "", id: stepNodeId });
       }
     }
 
     // Step 7: Handle save steps (images and data outputs were already processed in the loop above)
     for (let i = 0; i < results.length; i++) {
       const result = results[i];
-      const nodeId = result.nodeId;
+      const stepId = result.id;
 
-      if (!nodeId) continue;
+      if (!stepId) continue;
 
       // Handle save steps (no output to track, just fire callback)
       if (result.step.kind === "save") {
         callbacks?.onStep?.({
           stepIndex: i,
-          nodeId,
+          id: stepId,
           status: "completed",
         });
       }
@@ -1184,9 +1406,9 @@ export async function executeWorkflow(
     // Collect usage events from all AI operations in this execution
     const usageEvents = getCollectedUsageEvents();
 
-    return { imageIds, images, nodeIdByImageId, dataOutputs, usageEvents };
+    return { imageIds, images, idByImageId, dataOutputs, usageEvents };
   } catch (error) {
-    callbacks?.onError?.(error instanceof Error ? error.message : String(error), currentNodeId);
+    callbacks?.onError?.(error instanceof Error ? error.message : String(error), currentStepId);
     throw error;
   }
 }
